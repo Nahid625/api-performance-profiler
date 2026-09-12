@@ -38,6 +38,15 @@ phase-2-unit-1
 Branch from `main`, build the one unit on it, stop. Nahid reviews, pushes and
 merges it himself, then the next unit branches fresh from `main`.
 
+Once a PR is merged, delete that branch in both places — on GitHub and locally:
+
+```bash
+git push origin --delete phase-1-unit-3
+git branch -d phase-1-unit-3
+```
+
+Only `main` and the branch currently being worked on should exist.
+
 ## Verification
 
 Every unit must pass, in this order, before it is handed over:

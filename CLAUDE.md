@@ -41,10 +41,13 @@ path param that exists in the database, a body the route accepts.
 
 ## How to work here
 
+- **Explain the unit in Bangla before writing any of its code** — what gets
+  built, which decisions it settles — and wait for Nahid's go-ahead.
 - One unit at a time. Build it, verify it, then **stop** — do not continue to
   the next item in the batch.
 - **One branch per unit**, named `phase-<n>-unit-<n>` (e.g. `phase-1-unit-1`),
-  branched from `main`.
+  branched from `main`. Once merged, delete it on GitHub and locally — only
+  `main` and the current unit's branch should exist.
 - Verify in this order: eslint → jest → build. Then run the example app and
   confirm the metrics are real.
 - **Never push.** No `git push`, no `gh repo create`, no `gh pr create`. Print
