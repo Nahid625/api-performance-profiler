@@ -1,0 +1,21 @@
+{
+  "name": "@api-profiler/express",
+  "version": "0.0.0",
+  "description": "Express middleware for api-performance-profiler.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@api-profiler/core": "^0.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}
