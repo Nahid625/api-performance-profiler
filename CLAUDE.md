@@ -43,6 +43,8 @@ path param that exists in the database, a body the route accepts.
 
 - One unit at a time. Build it, verify it, then **stop** — do not continue to
   the next item in the batch.
+- **One branch per unit**, named `phase-<n>-unit-<n>` (e.g. `phase-1-unit-1`),
+  branched from `main`.
 - Verify in this order: eslint → jest → build. Then run the example app and
   confirm the metrics are real.
 - **Never push.** No `git push`, no `gh repo create`, no `gh pr create`. Print
