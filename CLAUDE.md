@@ -32,8 +32,12 @@ path param that exists in the database, a body the route accepts.
    unless a route is explicitly opted in, localhost targets only. Replaying a
    `POST` writes real data.
 5. **Recorded requests hold live credentials.** Memory only, never written to
-   disk, never sent anywhere, masked in any UI.
-6. **Bounded storage only.** This runs inside someone else's application.
+   disk, never sent anywhere, masked in any UI. In production the recorder is
+   disabled entirely — nothing captured, nothing to leak.
+6. **Production binds to `127.0.0.1` only**, never `0.0.0.0`. The dashboard is
+   reached through an SSH tunnel. We ship no login, no session cookies, no
+   public port — access control is SSH, which the server owner already manages.
+7. **Bounded storage only.** This runs inside someone else's application.
 
 ## How to work here
 
