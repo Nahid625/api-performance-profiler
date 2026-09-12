@@ -1,8 +1,7 @@
 {
   "name": "@api-profiler/node",
   "version": "0.0.0",
-  "private": true,
-  "description": "Framework-agnostic Node.js instrumentation for api-performance-profiler (not yet implemented).",
+  "description": "Framework-agnostic request timing for api-performance-profiler.",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
