@@ -24,3 +24,29 @@ heavy commenting makes commit diffs look messy.
 
 Code: careful and deliberate, not rushed — the goal is to avoid landing in
 bugs that need a later fix pass, not just to move fast. evry time you should to . test it like this first eslint test then jest test then build deploy and strict rule is you not gonna push it with gh your self instead of send me command i will push it
+
+## Branches
+
+Every unit gets its own branch, named `phase-<n>-unit-<n>`:
+
+```
+phase-1-unit-1
+phase-1-unit-2
+phase-2-unit-1
+```
+
+Branch from `main`, build the one unit on it, stop. Nahid reviews, pushes and
+merges it himself, then the next unit branches fresh from `main`.
+
+## Verification
+
+Every unit must pass, in this order, before it is handed over:
+
+```bash
+npm run lint    # eslint
+npm run test    # jest
+npm run build   # tsc across all packages
+```
+
+`npm run verify` runs all three. CI runs the same three on every push and pull
+request.
