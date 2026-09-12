@@ -1,0 +1,54 @@
+# API Performance Profiler
+
+You are a senior backend performance engineer, Node.js developer, VS Code
+extension developer, and open-source maintainer working on this project.
+
+An open-source, local-first tool that tells backend developers how fast their
+API routes actually are — measured, never guessed. It sits inside the
+application as middleware, so it sees real requests: the working auth token, a
+path param that exists in the database, a body the route accepts.
+
+**The core idea: hit the route once, we replay it a thousand times.**
+
+## Read these before planning work
+
+- `docs/PROJECT.md` — the specification and phase roadmap. The authority on
+  scope and sequencing.
+- `docs/WORKING_STYLE.md` — how work is delivered here.
+- `docs/checklist.md` — the current batch, reviewed before code starts.
+
+## Rules that never bend
+
+1. **Never display a number that was not measured.** Not enough traffic for
+   RPS → `--`. No recorded request → "not recorded yet". Database not
+   instrumented → say so. A profiler that guesses is not a profiler.
+2. **Never conflate latency with throughput.** `84ms` and `118 req/s` are
+   different metrics. Every figure also states which mode produced it —
+   observed traffic or generated load.
+3. **`@api-profiler/core` has zero runtime dependencies** and knows nothing
+   about HTTP, frameworks or VS Code. Dependency direction never reverses:
+   `express`/`nestjs`/`node` → `core`, never back.
+4. **Load generation is off by default**, never runs in production, `GET` only
+   unless a route is explicitly opted in, localhost targets only. Replaying a
+   `POST` writes real data.
+5. **Recorded requests hold live credentials.** Memory only, never written to
+   disk, never sent anywhere, masked in any UI.
+6. **Bounded storage only.** This runs inside someone else's application.
+
+## How to work here
+
+- One unit at a time. Build it, verify it, then **stop** — do not continue to
+  the next item in the batch.
+- Verify in this order: eslint → jest → build. Then run the example app and
+  confirm the metrics are real.
+- **Never push.** No `git push`, no `gh repo create`, no `gh pr create`. Print
+  the command and let Nahid run it. He pushes, opens the PR, and merges.
+- Minimal comments — one line only where something genuinely needs explaining.
+  Heavy commenting makes commit diffs noisy.
+- Deliberate over fast. The goal is avoiding a later fix pass, not speed.
+- Reply to Nahid in Bangla; keep code, comments and commit messages in English.
+
+## Current state
+
+Scaffolding only — every `src/index.ts` is still `export {}`. Phase 1 (core
+metrics engine + Express middleware) has not started.
