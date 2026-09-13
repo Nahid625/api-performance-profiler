@@ -66,5 +66,8 @@ Phase 1 complete: `core` (types, rolling window store, aggregation), `node`
 Phase 2 (request recorder) complete: `node` has the recorder, display masking
 and the `Profiler` wiring; `express` captures url, headers and body from `req`
 and re-exports `maskRecording`; the example app shows masked recordings and
-checks them. Next: Phase 3 checklist (load runner). `nestjs` and
-`vscode-extension` are still empty.
+checks them.
+
+Phase 3 (load runner) in progress: `node` has `checkLoadRun`, the safety
+gate that runs before any load is generated. Next: the autocannon-backed
+runner. `nestjs` and `vscode-extension` are still empty.
