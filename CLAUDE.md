@@ -59,8 +59,11 @@ path param that exists in the database, a body the route accepts.
 
 ## Current state
 
-Phase 1 complete. `core` (types, rolling window store, aggregation), `node`
-(request timer), `express` (middleware) and `examples/express` (runnable app,
-`npm run demo -w example-express` checks its own figures) are built. Next:
-Phase 2 checklist (request recorder). `nestjs` and `vscode-extension` are still
-empty.
+Phase 1 complete: `core` (types, rolling window store, aggregation), `node`
+(request timer), `express` (middleware), `examples/express` (runnable app,
+`npm run demo -w example-express` checks its own figures).
+
+Phase 2 (request recorder) in progress: `node` has the recorder, display
+masking and the `Profiler` wiring; `express` captures url, headers and body
+from `req`. Next: show recordings in the example app. `nestjs` and
+`vscode-extension` are still empty.

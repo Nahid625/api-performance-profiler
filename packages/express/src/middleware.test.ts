@@ -202,3 +202,237 @@ describe('profiler middleware', () => {
     expect(p.stats()).toEqual([]);
   });
 });
+
+describe('request recording', () => {
+  const originalEnv = process.env.NODE_ENV;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  async function post(base: string, path: string, body: unknown, headers = {}): Promise<number> {
+    const res = await fetch(`${base}${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+    await res.text();
+    return res.status;
+  }
+
+  it('records a JSON body parsed by express.json()', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.post('/login', (req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/login', { email: 'karim@example.com', password: 'hunter2' });
+    });
+    await settle();
+
+    expect(p.recordings()).toEqual([
+      expect.objectContaining({
+        method: 'POST',
+        route: '/login',
+        url: '/login',
+        body: { email: 'karim@example.com', password: 'hunter2' },
+        bodyUnavailable: false,
+      }),
+    ]);
+  });
+
+  it('keeps the auth header and the full url with mount path and query', async () => {
+    const p = profiler();
+    const app = express();
+    const router = express.Router();
+    router.get('/orders/:id', (req, res) => {
+      res.send('ok');
+    });
+    app.use(p);
+    app.use('/api', router);
+
+    await serve(app, async (base) => {
+      await (
+        await fetch(`${base}/api/orders/9?expand=items`, {
+          headers: { authorization: 'Bearer abc123xyz' },
+        })
+      ).text();
+    });
+    await settle();
+
+    expect(p.recordings()[0]).toMatchObject({
+      route: '/api/orders/:id',
+      url: '/api/orders/9?expand=items',
+      headers: { authorization: 'Bearer abc123xyz' },
+    });
+  });
+
+  it('flags a body that was sent but never parsed', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.post('/raw', (req, res) => {
+      res.send('ok');
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/raw', { any: 'thing' });
+    });
+    await settle();
+
+    expect(p.recordings()[0]).toMatchObject({ body: undefined, bodyUnavailable: true });
+  });
+
+  it('does not flag a request that had no body', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.get('/users/:id', (req, res) => {
+      res.send('ok');
+    });
+
+    await serve(app, async (base) => {
+      await (await fetch(`${base}/users/42`)).text();
+    });
+    await settle();
+
+    expect(p.recordings()[0]).toMatchObject({ body: undefined, bodyUnavailable: false });
+  });
+
+  it('keeps the body as the client sent it when a handler mutates it', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.post('/login', (req, res) => {
+      delete req.body.password;
+      req.body.email = req.body.email.toUpperCase();
+      res.json({ ok: true });
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/login', { email: 'karim@example.com', password: 'hunter2' });
+    });
+    await settle();
+
+    expect(p.recordings()[0].body).toEqual({ email: 'karim@example.com', password: 'hunter2' });
+  });
+
+  it('keeps the original when validation middleware replaces req.body', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.use((req, res, next) => {
+      req.body = { id: Number(req.body.id) };
+      next();
+    });
+    app.post('/items', (req, res) => {
+      res.json(req.body);
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/items', { id: '42' });
+    });
+    await settle();
+
+    expect(p.recordings()[0].body).toEqual({ id: '42' });
+  });
+
+  it('still lets the app read and write req.body normally', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.post('/echo', (req, res) => {
+      req.body.seen = true;
+      res.json(req.body);
+    });
+
+    await serve(app, async (base) => {
+      const res = await fetch(`${base}/echo`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ a: 1 }),
+      });
+      expect(await res.json()).toEqual({ a: 1, seen: true });
+    });
+  });
+
+  it('records the body when the parser runs before the profiler', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(express.json());
+    app.use(p);
+    app.post('/login', (req, res) => {
+      delete req.body.password;
+      res.json({ ok: true });
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/login', { email: 'a@b.c', password: 'hunter2' });
+    });
+    await settle();
+
+    expect(p.recordings()[0].body).toEqual({ email: 'a@b.c', password: 'hunter2' });
+  });
+
+  it('does not record a failed request', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.post('/login', (req, res) => {
+      res.status(401).json({ error: 'bad token' });
+    });
+
+    await serve(app, async (base) => {
+      expect(await post(base, '/login', { email: 'x' })).toBe(401);
+    });
+    await settle();
+
+    expect(p.stats()[0].errorCount).toBe(1);
+    expect(p.recordings()).toEqual([]);
+  });
+
+  it('does not record unmatched requests', async () => {
+    const p = profiler();
+    const app = express();
+    app.use(p);
+
+    await serve(app, async (base) => {
+      await (await fetch(`${base}/wp-admin`)).text();
+    });
+    await settle();
+
+    expect(p.recordings()).toEqual([]);
+  });
+
+  it('records nothing in production but still measures', async () => {
+    process.env.NODE_ENV = 'production';
+    const p = profiler();
+    const app = express();
+    app.use(p);
+    app.use(express.json());
+    app.post('/login', (req, res) => {
+      res.json({ ok: true });
+    });
+
+    await serve(app, async (base) => {
+      await post(base, '/login', { password: 'hunter2' }, { authorization: 'Bearer secret' });
+    });
+    await settle();
+
+    expect(p.isRecording).toBe(false);
+    expect(p.recordings()).toEqual([]);
+    expect(p.stats()[0].count).toBe(1);
+  });
+});
