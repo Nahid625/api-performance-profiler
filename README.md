@@ -39,6 +39,13 @@ Locally, the profiler keeps the most recent successful request for each route
 — including its auth headers — so it can be replayed later for load testing.
 Recordings live in memory only and are masked wherever they are displayed.
 
+```js
+const { profiler, maskRecording } = require('@api-profiler/express');
+
+p.recordings();                     // raw, for replay — holds real tokens
+p.recordings().map(maskRecording);  // safe to print or display
+```
+
 Recording is on only when `NODE_ENV` is unset, `development` or `test`. Any
 other value — `production`, `staging`, anything else — turns it off completely.
 

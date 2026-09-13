@@ -63,7 +63,8 @@ Phase 1 complete: `core` (types, rolling window store, aggregation), `node`
 (request timer), `express` (middleware), `examples/express` (runnable app,
 `npm run demo -w example-express` checks its own figures).
 
-Phase 2 (request recorder) in progress: `node` has the recorder, display
-masking and the `Profiler` wiring; `express` captures url, headers and body
-from `req`. Next: show recordings in the example app. `nestjs` and
+Phase 2 (request recorder) complete: `node` has the recorder, display masking
+and the `Profiler` wiring; `express` captures url, headers and body from `req`
+and re-exports `maskRecording`; the example app shows masked recordings and
+checks them. Next: Phase 3 checklist (load runner). `nestjs` and
 `vscode-extension` are still empty.

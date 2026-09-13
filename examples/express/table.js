@@ -1,3 +1,9 @@
+function renderTable(header, rows) {
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
+  const line = (cells) => cells.map((c, i) => c.padEnd(widths[i])).join('  ');
+  return [line(header), line(widths.map((w) => '-'.repeat(w))), ...rows.map(line)].join('\n');
+}
+
 function formatTable(stats) {
   if (stats.length === 0) {
     return 'No requests in the last window yet.';
@@ -15,11 +21,7 @@ function formatTable(stats) {
       s.rps === null ? '--' : s.rps.toFixed(1),
     ]);
 
-  const header = ['mode', 'route', 'count', 'avg', 'max', 'errors', 'req/s'];
-  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
-  const line = (cells) => cells.map((c, i) => c.padEnd(widths[i])).join('  ');
-
-  return [line(header), line(widths.map((w) => '-'.repeat(w))), ...rows.map(line)].join('\n');
+  return renderTable(['mode', 'route', 'count', 'avg', 'max', 'errors', 'req/s'], rows);
 }
 
-module.exports = { formatTable };
+module.exports = { renderTable, formatTable };
