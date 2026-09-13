@@ -33,6 +33,19 @@ app.listen(3000);
 p.stats();
 ```
 
+## Request recording and `NODE_ENV`
+
+Locally, the profiler keeps the most recent successful request for each route
+— including its auth headers — so it can be replayed later for load testing.
+Recordings live in memory only and are masked wherever they are displayed.
+
+Recording is on only when `NODE_ENV` is unset, `development` or `test`. Any
+other value — `production`, `staging`, anything else — turns it off completely.
+
+**Set `NODE_ENV=production` on your production servers.** If it is left unset
+there, the profiler cannot tell it is running in production and will record
+real users' requests in memory.
+
 ## License
 
 MIT
