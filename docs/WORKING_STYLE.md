@@ -72,6 +72,9 @@ is format → typecheck → the relevant unit tests → the full suite → lint 
 project-specific consistency check; `verify` covers what exists today and grows
 as steps are added.
 
+- **Before handing a unit over, run those steps on a clean copy** — no
+  `node_modules`, no `dist` — exactly as CI does. A local pass can hide on stale
+  build output; this is how Unit 5 reached CI broken.
 - If it is user-facing and testable live, actually run it against realistic
   data rather than trusting the test suite alone.
 - Any test-data mutation against shared state gets restored afterwards. Never
