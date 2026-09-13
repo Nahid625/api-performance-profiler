@@ -4,3 +4,5 @@ export type { RecordedRequest, RequestSnapshot } from './recorder';
 export { RequestRecorder, MAX_RECORDED_BODY_BYTES } from './recorder';
 export type { MaskedRecording, BodySummary } from './mask';
 export { maskRecording, MASK } from './mask';
+export type { LoadRunRequest, LoadRunCheck } from './guard';
+export { checkLoadRun } from './guard';
