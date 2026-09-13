@@ -1,0 +1,14 @@
+{
+  "name": "example-express",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runnable Express app showing @api-profiler/express on real requests.",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "@api-profiler/express": "^0.0.0",
+    "express": "^5.2.1"
+  }
+}

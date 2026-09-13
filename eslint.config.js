@@ -1,4 +1,5 @@
 const js = require('@eslint/js');
+const globals = require('globals');
 const tseslint = require('typescript-eslint');
 
 module.exports = tseslint.config(
@@ -12,7 +13,7 @@ module.exports = tseslint.config(
     files: ['**/*.js'],
     languageOptions: {
       sourceType: 'commonjs',
-      globals: { module: 'writable', require: 'readonly', __dirname: 'readonly' },
+      globals: globals.node,
     },
   },
 );
