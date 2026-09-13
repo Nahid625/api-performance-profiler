@@ -21,12 +21,16 @@ npm install @api-profiler/express
 
 ```js
 const express = require('express');
-const profiler = require('@api-profiler/express');
+const { profiler } = require('@api-profiler/express');
 
 const app = express();
-app.use(profiler());
+const p = profiler();
+app.use(p);
 
 app.listen(3000);
+
+// later: per-route count, average, max, error rate and RPS
+p.stats();
 ```
 
 ## License
