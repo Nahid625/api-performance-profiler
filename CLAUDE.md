@@ -59,5 +59,6 @@ path param that exists in the database, a body the route accepts.
 
 ## Current state
 
-Scaffolding only — every `src/index.ts` is still `export {}`. Phase 1 (core
-metrics engine + Express middleware) has not started.
+Phase 1 in progress. `core` (types, rolling window store, aggregation), `node`
+(request timer) and `express` (middleware) are built. Next: the example app.
+`nestjs` and `vscode-extension` are still empty.
