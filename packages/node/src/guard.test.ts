@@ -61,6 +61,18 @@ describe('checkLoadRun', () => {
     });
   });
 
+  describe('body', () => {
+    it('refuses a recording whose body was never captured', () => {
+      const reason = reasonOf({
+        method: 'POST',
+        route: '/raw',
+        recording: recording({ method: 'POST', route: '/raw', bodyUnavailable: true }),
+        allowLoadOn: ['POST /raw'],
+      });
+      expect(reason).toContain('no parser captured');
+    });
+  });
+
   describe('method', () => {
     it.each(['POST', 'PUT', 'PATCH', 'DELETE'])('refuses %s by default', (method) => {
       const reason = reasonOf({ method, route: '/login', recording: recording({ method }) });
