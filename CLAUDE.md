@@ -69,6 +69,8 @@ and re-exports `maskRecording`; the example app shows masked recordings and
 checks them.
 
 Phase 3 (load runner) in progress: `node` has `checkLoadRun` (the safety
-gate) and `LoadRunner` (autocannon-backed replay of a recording, tagged with
-`x-api-profiler-load: 1`). Next: freezing a run's server-side figures into a
-snapshot. `nestjs` and `vscode-extension` are still empty.
+gate), `LoadRunner` (autocannon-backed replay tagged `x-api-profiler-load: 1`)
+and `Profiler.runLoad()`, which runs gate → replay → frozen per-route snapshot
+(`loadResults()`), counting the whole run rather than the rolling window.
+Next: wire it into the Express middleware. `nestjs` and `vscode-extension` are
+still empty.

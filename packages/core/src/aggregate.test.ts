@@ -1,4 +1,4 @@
-import { aggregate, MIN_SAMPLES_FOR_RPS, summarize } from './aggregate';
+import { addSample, aggregate, emptyCounts, MIN_SAMPLES_FOR_RPS, statsFromCounts, summarize } from './aggregate';
 import { MetricStore } from './store';
 import { RouteMetric } from './types';
 
@@ -108,5 +108,48 @@ describe('summarize', () => {
 
   it('returns nothing for an empty store', () => {
     expect(summarize(new MetricStore())).toEqual([]);
+  });
+});
+
+describe('statsFromCounts', () => {
+  const base = { mode: 'load' as const, method: 'GET', route: '/users/:id' };
+
+  it('returns nothing when nothing was counted', () => {
+    expect(statsFromCounts({ ...base, count: 0, totalMs: 0, maxMs: 0, errorCount: 0 }, 5)).toBeNull();
+  });
+
+  it('derives average, error rate and rps from the counts', () => {
+    const stats = statsFromCounts(
+      { ...base, count: 20, totalMs: 500, maxMs: 90, errorCount: 5 },
+      4,
+    );
+    expect(stats).toEqual({
+      ...base,
+      count: 20,
+      averageMs: 25,
+      maxMs: 90,
+      errorCount: 5,
+      errorRate: 0.25,
+      rps: 5,
+    });
+  });
+
+  it('applies the same minimum-sample rule as aggregate', () => {
+    const thin = { ...base, count: MIN_SAMPLES_FOR_RPS - 1, totalMs: 9, maxMs: 1, errorCount: 0 };
+    expect(statsFromCounts(thin, 5)?.rps).toBeNull();
+  });
+
+  it('never divides by a zero-length period', () => {
+    const counts = { ...base, count: 50, totalMs: 50, maxMs: 1, errorCount: 0 };
+    expect(statsFromCounts(counts, 0)?.rps).toBeNull();
+  });
+
+  it('matches what aggregate computes for the same samples', () => {
+    const list = [10, 20, 60].map((durationMs, i) =>
+      metric({ durationMs, statusCode: i === 2 ? 500 : 200, success: i !== 2, mode: 'load' }),
+    );
+    const counts = emptyCounts('load', 'GET', '/users');
+    list.forEach((s) => addSample(counts, s));
+    expect(statsFromCounts(counts, 5)).toEqual(aggregate(list, 5));
   });
 });
