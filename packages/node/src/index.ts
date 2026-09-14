@@ -6,3 +6,11 @@ export type { MaskedRecording, BodySummary } from './mask';
 export { maskRecording, MASK } from './mask';
 export type { LoadRunRequest, LoadRunCheck } from './guard';
 export { checkLoadRun } from './guard';
+export type { LoadRunOptions, LoadRunSummary } from './runner';
+export {
+  LoadRunner,
+  LOAD_HEADER,
+  DEFAULT_CONNECTIONS,
+  DEFAULT_DURATION_SECONDS,
+  REQUEST_TIMEOUT_SECONDS,
+} from './runner';

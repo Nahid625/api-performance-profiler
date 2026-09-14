@@ -26,6 +26,10 @@ export function checkLoadRun(run: LoadRunRequest): LoadRunCheck {
     return refuse(`${label} has no recording yet — send one successful request first`);
   }
 
+  if (run.recording.bodyUnavailable) {
+    return refuse(`${label} sent a body that no parser captured — add express.json() before the profiler`);
+  }
+
   if (run.method !== 'GET' && !(run.allowLoadOn ?? []).includes(label)) {
     return refuse(`${label} is not GET; add "${label}" to allowLoadOn to replay it`);
   }
