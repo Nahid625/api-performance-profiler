@@ -1,15 +1,35 @@
 import type { Request, RequestHandler } from 'express';
 import { MetricStoreOptions, RouteStats, UNMATCHED_ROUTE } from '@api-profiler/core';
-import { CapturedRequest, Profiler, RecordedRequest } from '@api-profiler/node';
+import {
+  CapturedRequest,
+  LOAD_HEADER,
+  LoadResult,
+  Profiler,
+  RecordedRequest,
+} from '@api-profiler/node';
+
+export interface ProfilerOptions extends MetricStoreOptions {
+  allowLoadOn?: string[];
+}
+
+export interface LoadTestOptions {
+  target: string;
+  connections?: number;
+  duration?: number;
+}
 
 export interface ProfilerMiddleware extends RequestHandler {
   stats(): RouteStats[];
   recordings(): RecordedRequest[];
   readonly isRecording: boolean;
+  loadTest(method: string, route: string, options: LoadTestOptions): Promise<LoadResult>;
+  loadResults(): LoadResult[];
+  loadResult(method: string, route: string): LoadResult | undefined;
 }
 
-export function profiler(options: MetricStoreOptions = {}): ProfilerMiddleware {
-  const instance = new Profiler(options);
+export function profiler(options: ProfilerOptions = {}): ProfilerMiddleware {
+  const { allowLoadOn, ...storeOptions } = options;
+  const instance = new Profiler(storeOptions);
 
   const middleware: RequestHandler = (req, res, next) => {
     const done = instance.start();
@@ -21,6 +41,7 @@ export function profiler(options: MetricStoreOptions = {}): ProfilerMiddleware {
         method: req.method,
         route: routeOf(),
         statusCode: res.statusCode,
+        mode: req.headers[LOAD_HEADER] === '1' ? 'load' : 'observed',
         request: capture(req, bodyOf()),
       });
     });
@@ -31,6 +52,10 @@ export function profiler(options: MetricStoreOptions = {}): ProfilerMiddleware {
     stats: () => instance.stats(),
     recordings: () => instance.recordings(),
     isRecording: instance.isRecording,
+    loadTest: (method: string, route: string, run: LoadTestOptions) =>
+      instance.runLoad({ method, route, ...run, allowLoadOn }),
+    loadResults: () => instance.loadResults(),
+    loadResult: (method: string, route: string) => instance.loadResult(method, route),
   });
 }
 

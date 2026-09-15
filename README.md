@@ -33,6 +33,27 @@ app.listen(3000);
 p.stats();
 ```
 
+## Load testing a route
+
+Once a route has a recording, replay it under load — same URL, headers, token
+and body — and get the route's own server-side figures for the whole run:
+
+```js
+const result = await p.loadTest('GET', '/users/:id', {
+  target: 'http://127.0.0.1:3000',   // localhost only
+  connections: 10,                   // default
+  duration: 5,                       // seconds, default
+});
+
+result.stats;      // count, averageMs, maxMs, errorRate, rps for the run
+p.loadResults();   // kept until the next run of that route
+```
+
+Runs are off by default, refused in production, and `GET`-only unless a route
+is listed in `profiler({ allowLoadOn: ['POST /search'] })` — replaying a `POST`
+writes real data. Every replayed request carries `x-api-profiler-load: 1`, so
+your handlers can skip side effects (mail, payments) during a run.
+
 ## Request recording and `NODE_ENV`
 
 Locally, the profiler keeps the most recent successful request for each route
