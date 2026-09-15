@@ -72,5 +72,6 @@ Phase 3 (load runner) in progress: `node` has `checkLoadRun` (the safety
 gate), `LoadRunner` (autocannon-backed replay tagged `x-api-profiler-load: 1`)
 and `Profiler.runLoad()`, which runs gate → replay → frozen per-route snapshot
 (`loadResults()`), counting the whole run rather than the rolling window.
-Next: wire it into the Express middleware. `nestjs` and `vscode-extension` are
-still empty.
+`express` tags `x-api-profiler-load` traffic as `load`, takes `allowLoadOn`,
+and exposes `p.loadTest()` / `p.loadResults()`. Next: show a load run in the
+example app. `nestjs` and `vscode-extension` are still empty.

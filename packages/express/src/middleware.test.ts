@@ -436,3 +436,108 @@ describe('request recording', () => {
     expect(p.stats()[0].count).toBe(1);
   });
 });
+
+describe('load testing', () => {
+  const LOAD = 'x-api-profiler-load';
+  const quick = { connections: 2, duration: 1 };
+
+  async function app(options = {}) {
+    const p = profiler(options);
+    const a = express();
+    a.use(p);
+    a.use(express.json());
+    a.get('/users/:id', (req, res) => {
+      res.json({ id: req.params.id });
+    });
+    a.post('/search', (req, res) => {
+      res.json({ q: req.body?.q ?? null });
+    });
+    return { p, a };
+  }
+
+  it('tags requests carrying the load header as load traffic', async () => {
+    const { p, a } = await app();
+    await serve(a, async (base) => {
+      await (await fetch(`${base}/users/1`)).text();
+      await (await fetch(`${base}/users/1`, { headers: { [LOAD]: '1' } })).text();
+      await (await fetch(`${base}/users/1`, { headers: { [LOAD]: '1' } })).text();
+    });
+    await settle();
+
+    const modes = Object.fromEntries(p.stats().map((s) => [s.mode, s.count]));
+    expect(modes).toEqual({ observed: 1, load: 2 });
+  });
+
+  it('never records load traffic', async () => {
+    const { p, a } = await app();
+    await serve(a, async (base) => {
+      await (await fetch(`${base}/users/42`, { headers: { [LOAD]: '1' } })).text();
+    });
+    await settle();
+
+    expect(p.recordings()).toEqual([]);
+  });
+
+  it('runs a load test against the app and freezes the result', async () => {
+    const { p, a } = await app();
+    await serve(a, async (base) => {
+      await (await fetch(`${base}/users/42`)).text();
+      await settle();
+
+      const result = await p.loadTest('GET', '/users/:id', { target: base, ...quick });
+
+      expect(result.stats?.mode).toBe('load');
+      expect(result.stats?.count).toBeGreaterThan(0);
+      expect(result.stats?.errorRate).toBe(0);
+      expect(result.note).toBeNull();
+      expect(p.loadResults()).toHaveLength(1);
+      expect(p.loadResult('GET', '/users/:id')?.completedAt).toBe(result.completedAt);
+
+      const observed = p.stats().find((s) => s.mode === 'observed');
+      expect(observed?.count).toBe(1);
+      expect(p.recordings()[0].url).toBe('/users/42');
+    });
+  });
+
+  it('refuses a non-GET route unless allowLoadOn lists it', async () => {
+    const refused = await app();
+    await serve(refused.a, async (base) => {
+      await (
+        await fetch(`${base}/search`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ q: 'shoes' }),
+        })
+      ).text();
+      await settle();
+      await expect(
+        refused.p.loadTest('POST', '/search', { target: base, ...quick }),
+      ).rejects.toThrow(/allowLoadOn/);
+    });
+
+    const allowed = await app({ allowLoadOn: ['POST /search'] });
+    await serve(allowed.a, async (base) => {
+      await (
+        await fetch(`${base}/search`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ q: 'shoes' }),
+        })
+      ).text();
+      await settle();
+      const result = await allowed.p.loadTest('POST', '/search', { target: base, ...quick });
+      expect(result.stats?.count).toBeGreaterThan(0);
+      expect(result.stats?.errorRate).toBe(0);
+    });
+  });
+
+  it('refuses a route that was never recorded without sending anything', async () => {
+    const { p, a } = await app();
+    await serve(a, async (base) => {
+      await expect(p.loadTest('GET', '/users/:id', { target: base, ...quick })).rejects.toThrow(
+        /no recording yet/,
+      );
+    });
+    expect(p.stats()).toEqual([]);
+  });
+});
