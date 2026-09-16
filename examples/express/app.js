@@ -7,9 +7,9 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function createApp() {
+function createApp(options = {}) {
   const app = express();
-  const p = profiler();
+  const p = profiler(options);
 
   app.use(p);
   app.use(express.json());

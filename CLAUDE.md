@@ -68,10 +68,11 @@ and the `Profiler` wiring; `express` captures url, headers and body from `req`
 and re-exports `maskRecording`; the example app shows masked recordings and
 checks them.
 
-Phase 3 (load runner) in progress: `node` has `checkLoadRun` (the safety
-gate), `LoadRunner` (autocannon-backed replay tagged `x-api-profiler-load: 1`)
-and `Profiler.runLoad()`, which runs gate → replay → frozen per-route snapshot
-(`loadResults()`), counting the whole run rather than the rolling window.
-`express` tags `x-api-profiler-load` traffic as `load`, takes `allowLoadOn`,
-and exposes `p.loadTest()` / `p.loadResults()`. Next: show a load run in the
-example app. `nestjs` and `vscode-extension` are still empty.
+Phase 3 (load runner) complete: `node` has `checkLoadRun` (the safety gate),
+`LoadRunner` (autocannon-backed replay tagged `x-api-profiler-load: 1`) and
+`Profiler.runLoad()` (gate → replay → frozen per-route snapshot counting the
+whole run); `express` tags load traffic, takes `allowLoadOn` and exposes
+`p.loadTest()` / `p.loadResults()`; the example app runs and checks a real
+load test (`npm run demo`) and offers `npm run load -- GET /users/42`.
+Next: Phase 4 checklist (CLI). `nestjs` and `vscode-extension` are still
+empty.
