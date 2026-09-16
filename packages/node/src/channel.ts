@@ -3,9 +3,10 @@ import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { maskRecording } from './mask';
-import { Profiler } from './profiler';
+import type { Profiler } from './profiler';
 
 export const DEFAULT_CHANNEL_PORT = 4780;
+const MAX_BODY_BYTES = 64 * 1024;
 
 // Loopback only, by construction: there is no option to bind anywhere else.
 const HOST = '127.0.0.1';
@@ -34,7 +35,9 @@ export class LocalChannel {
   // Resolves null instead of throwing: a busy port must never take the host app down.
   start(): Promise<string | null> {
     const port = this.options.port ?? DEFAULT_CHANNEL_PORT;
-    const server = createServer((req, res) => this.handle(req, res));
+    const server = createServer((req, res) => {
+      this.handle(req, res).catch((error: Error) => send(res, 500, { error: error.message }));
+    });
 
     return new Promise((resolve) => {
       server.once('error', (error: NodeJS.ErrnoException) => {
@@ -46,6 +49,8 @@ export class LocalChannel {
         resolve(null);
       });
       server.listen(port, HOST, () => {
+        // The channel must never be the thing keeping the host process alive.
+        server.unref();
         this.server = server;
         resolve(this.url);
       });
@@ -64,12 +69,17 @@ export class LocalChannel {
     });
   }
 
-  private handle(req: IncomingMessage, res: ServerResponse): void {
+  private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+
+    if (req.method === 'POST' && path === '/load-runs') {
+      await this.startRun(req, res);
+      return;
+    }
     if (req.method !== 'GET') {
       send(res, 405, { error: 'method not allowed' });
       return;
     }
-    const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     switch (path) {
       case '/health':
         send(res, 200, { ok: true, version: VERSION });
@@ -87,9 +97,77 @@ export class LocalChannel {
         send(res, 404, { error: `no such endpoint: ${path}` });
     }
   }
+
+  private async startRun(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    let body: Record<string, unknown>;
+    try {
+      body = await readJson(req);
+    } catch (error) {
+      send(res, 400, { error: (error as Error).message });
+      return;
+    }
+
+    const { method, route, target, connections, duration } = body;
+    if (typeof method !== 'string' || typeof route !== 'string') {
+      send(res, 400, { error: 'method and route are required strings' });
+      return;
+    }
+    if (!optionalNumber(connections) || !optionalNumber(duration) || !optionalString(target)) {
+      send(res, 400, { error: 'connections and duration must be numbers, target a string' });
+      return;
+    }
+
+    try {
+      const result = await this.profiler.runLoad({ method, route, target, connections, duration });
+      send(res, 200, result);
+    } catch (error) {
+      send(res, 409, { error: (error as Error).message });
+    }
+  }
+}
+
+function optionalNumber(value: unknown): value is number | undefined {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value));
+}
+
+function optionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
+}
+
+function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(new Error('request body too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      const text = Buffer.concat(chunks).toString();
+      try {
+        const parsed: unknown = text ? JSON.parse(text) : {};
+        if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          reject(new Error('body must be a JSON object'));
+          return;
+        }
+        resolve(parsed as Record<string, unknown>);
+      } catch {
+        reject(new Error('body is not valid JSON'));
+      }
+    });
+    req.on('error', reject);
+  });
 }
 
 function send(res: ServerResponse, status: number, body: unknown): void {
+  if (res.headersSent) {
+    return;
+  }
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',

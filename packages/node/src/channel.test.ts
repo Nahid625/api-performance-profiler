@@ -1,3 +1,6 @@
+import { once } from 'node:events';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { networkInterfaces } from 'node:os';
 import { DEFAULT_CHANNEL_PORT, LocalChannel, VERSION } from './channel';
 import { Profiler } from './profiler';
@@ -18,6 +21,7 @@ function recordOne(profiler: Profiler): void {
     statusCode: 200,
     request: {
       url: '/users/42',
+      origin: 'http://127.0.0.1:3000',
       headers: { authorization: 'Bearer abc123xyz', cookie: 'sid=9f8e7' },
       body: undefined,
       bodyUnavailable: false,
@@ -138,5 +142,112 @@ describe('LocalChannel', () => {
     expect(channel.url).toBeNull();
     await expect(fetch(`${url}/health`)).rejects.toThrow();
     await expect(channel.stop()).resolves.toBeUndefined();
+  });
+});
+
+describe('POST /load-runs', () => {
+  async function app(profiler: Profiler): Promise<{ base: string; close: () => void }> {
+    const server = createServer((req, res) => {
+      const done = profiler.start();
+      res.on('finish', () =>
+        done({
+          method: req.method ?? 'GET',
+          route: '/users/:id',
+          statusCode: 200,
+          mode: req.headers['x-api-profiler-load'] === '1' ? 'load' : 'observed',
+          request: {
+            url: req.url ?? '/',
+            origin: `http://${req.headers.host ?? ''}`,
+            headers: req.headers,
+            body: undefined,
+            bodyUnavailable: false,
+          },
+        }),
+      );
+      res.end('ok');
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const { port } = server.address() as AddressInfo;
+    return {
+      base: `http://127.0.0.1:${port}`,
+      close: () => {
+        server.closeAllConnections();
+        server.close();
+      },
+    };
+  }
+
+  async function post(
+    url: string,
+    body: unknown,
+  ): Promise<{ status: number; json: Record<string, unknown> & { stats?: { mode: string; count: number }; error?: string } }> {
+    const res = await fetch(`${url}/load-runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    });
+    return { status: res.status, json: await res.json() };
+  }
+
+  it('runs a load test using the recording origin and exposes the result', async () => {
+    const profiler = new Profiler();
+    const target = await app(profiler);
+    const { channel, url } = await started(profiler);
+    try {
+      await (await fetch(`${target.base}/users/42`)).text();
+      await new Promise((r) => setTimeout(r, 30));
+
+      const { status, json } = await post(url, {
+        method: 'GET',
+        route: '/users/:id',
+        connections: 2,
+        duration: 1,
+      });
+      expect(status).toBe(200);
+      expect(json.target).toBe(target.base);
+      expect(json.stats?.mode).toBe('load');
+      expect(json.stats?.count).toBeGreaterThan(0);
+
+      const results = await (await fetch(`${url}/load-results`)).json();
+      expect(results).toHaveLength(1);
+      expect(results[0].completedAt).toBe(json.completedAt);
+    } finally {
+      await channel.stop();
+      target.close();
+    }
+  });
+
+  it('answers 409 with the gate reason when the route has no recording', async () => {
+    const { channel, url } = await started();
+    try {
+      const { status, json } = await post(url, { method: 'GET', route: '/nope' });
+      expect(status).toBe(409);
+      expect(json.error).toContain('no recording yet');
+    } finally {
+      await channel.stop();
+    }
+  });
+
+  it('answers 400 for a malformed body', async () => {
+    const { channel, url } = await started();
+    try {
+      expect((await post(url, 'not json')).status).toBe(400);
+      expect((await post(url, { route: '/x' })).status).toBe(400);
+      expect((await post(url, { method: 'GET', route: '/x', duration: 'long' })).status).toBe(400);
+      expect((await post(url, [1, 2])).status).toBe(400);
+    } finally {
+      await channel.stop();
+    }
+  });
+
+  it('still refuses POST on the read-only endpoints', async () => {
+    const { channel, url } = await started();
+    try {
+      const res = await fetch(`${url}/stats`, { method: 'POST' });
+      expect(res.status).toBe(405);
+    } finally {
+      await channel.stop();
+    }
   });
 });

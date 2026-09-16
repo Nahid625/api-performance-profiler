@@ -541,3 +541,76 @@ describe('load testing', () => {
     expect(p.stats()).toEqual([]);
   });
 });
+
+describe('channel and origin', () => {
+  it('records where each request arrived', async () => {
+    const p = profiler();
+    const a = express();
+    a.use(p);
+    a.get('/users/:id', (req, res) => {
+      res.send('ok');
+    });
+    let seen = '';
+    await serve(a, async (base) => {
+      seen = base;
+      await (await fetch(`${base}/users/42`)).text();
+    });
+    await settle();
+
+    expect(p.recordings()[0].origin).toBe(seen);
+  });
+
+  it('opens a channel when asked and serves the app through it', async () => {
+    const p = profiler({ channel: { port: 0 } });
+    const a = express();
+    a.use(p);
+    a.get('/users/:id', (req, res) => {
+      res.send('ok');
+    });
+    try {
+      const channel = await p.ready;
+      expect(channel).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+      expect(p.channelUrl).toBe(channel);
+
+      await serve(a, async (base) => {
+        await (await fetch(`${base}/users/42`)).text();
+        await settle();
+
+        const res = await fetch(`${channel}/load-runs`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ method: 'GET', route: '/users/:id', connections: 2, duration: 1 }),
+        });
+        const result = await res.json();
+        expect(res.status).toBe(200);
+        expect(result.target).toBe(base);
+        expect(result.stats.count).toBeGreaterThan(0);
+        expect(p.loadResults()).toHaveLength(1);
+      });
+    } finally {
+      await p.close();
+    }
+  });
+
+  it('runs loadTest without a target by using the recording origin', async () => {
+    const p = profiler();
+    const a = express();
+    a.use(p);
+    a.get('/users/:id', (req, res) => {
+      res.send('ok');
+    });
+    await serve(a, async (base) => {
+      await (await fetch(`${base}/users/42`)).text();
+      await settle();
+      const result = await p.loadTest('GET', '/users/:id', { connections: 2, duration: 1 });
+      expect(result.target).toBe(base);
+      expect(result.stats?.count).toBeGreaterThan(0);
+    });
+  });
+
+  it('leaves the channel closed under test by default', async () => {
+    const p = profiler();
+    expect(await p.ready).toBeNull();
+    expect(p.channelUrl).toBeNull();
+  });
+});

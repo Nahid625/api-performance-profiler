@@ -54,6 +54,26 @@ is listed in `profiler({ allowLoadOn: ['POST /search'] })` — replaying a `POST
 writes real data. Every replayed request carries `x-api-profiler-load: 1`, so
 your handlers can skip side effects (mail, payments) during a run.
 
+## Local channel
+
+In development the profiler also opens a small JSON server on
+`http://127.0.0.1:4780` (loopback only) so other local tools — the CLI, later
+the VS Code extension — can read what it has measured:
+
+```
+GET  /health   GET  /stats   GET  /recordings (masked)   GET  /load-results
+POST /load-runs   { "method": "GET", "route": "/users/:id" }
+```
+
+```js
+profiler({ channel: { port: 4790 } });   // another port
+profiler({ channel: false });            // no channel
+p.channelUrl;                            // 'http://127.0.0.1:4780', or null
+```
+
+It never opens in production or under `NODE_ENV=test` unless you ask for it,
+and if the port is busy it logs one warning and carries on without it.
+
 ## Request recording and `NODE_ENV`
 
 Locally, the profiler keeps the most recent successful request for each route

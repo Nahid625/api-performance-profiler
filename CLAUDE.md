@@ -77,6 +77,9 @@ load test (`npm run demo`) and offers `npm run load -- GET /users/42`.
 
 Phase 4 (CLI) in progress: `node` has `LocalChannel`, a read-only JSON server
 bound to `127.0.0.1` (default port 4780) serving `/health`, `/stats`,
-`/recordings` (masked only) and `/load-results`. Next: wire it into
-`Profiler`/Express, capture `origin`, add `POST /load-runs`. `nestjs` and
-`vscode-extension` are still empty.
+`/recordings` (masked only), `/load-results` and `POST /load-runs`. `Profiler`
+opens it automatically in development (`channel` option, `channelUrl`,
+`ready`, `close()`), recordings carry the `origin` they arrived on so a run
+needs no target, and Express passes it all through. Next: the `api-profiler`
+CLI package with `routes`/`stats`. `nestjs` and `vscode-extension` are still
+empty.

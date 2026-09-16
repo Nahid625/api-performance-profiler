@@ -1,4 +1,4 @@
-import { CapturedRequest, Profiler, recordingAllowed } from './profiler';
+import { CapturedRequest, channelAllowed, Profiler, recordingAllowed } from './profiler';
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -82,6 +82,7 @@ describe('Profiler', () => {
 function captured(overrides: Partial<CapturedRequest> = {}): CapturedRequest {
   return {
     url: '/users/42',
+    origin: 'http://127.0.0.1:3000',
     headers: { authorization: 'Bearer abc123xyz' },
     body: undefined,
     bodyUnavailable: false,
@@ -199,5 +200,98 @@ describe('Profiler recording', () => {
       expect(profiler.recordings()).toEqual([]);
       expect(profiler.stats()[0].count).toBe(1);
     });
+  });
+});
+
+describe('Profiler channel', () => {
+  const originalEnv = process.env.NODE_ENV;
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  it.each([undefined, '', 'development'])('opens by default when NODE_ENV is %p', (env) => {
+    expect(channelAllowed(env)).toBe(true);
+  });
+
+  it.each(['test', 'production', 'staging'])('stays closed by default when NODE_ENV is %p', (env) => {
+    expect(channelAllowed(env)).toBe(false);
+  });
+
+  it('opens a loopback channel in development', async () => {
+    delete process.env.NODE_ENV;
+    const profiler = new Profiler({ channel: { port: 0 } });
+    try {
+      const url = await profiler.ready;
+      expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+      expect(profiler.channelUrl).toBe(url);
+      expect((await (await fetch(`${url}/health`)).json()).ok).toBe(true);
+    } finally {
+      await profiler.close();
+    }
+  });
+
+  it('does not open one under test unless asked', async () => {
+    process.env.NODE_ENV = 'test';
+    const profiler = new Profiler();
+    expect(await profiler.ready).toBeNull();
+    expect(profiler.channelUrl).toBeNull();
+  });
+
+  it('opens one under test when asked explicitly', async () => {
+    process.env.NODE_ENV = 'test';
+    const profiler = new Profiler({ channel: { port: 0 } });
+    try {
+      expect(await profiler.ready).not.toBeNull();
+    } finally {
+      await profiler.close();
+    }
+  });
+
+  it('never opens one in production, even when asked', async () => {
+    process.env.NODE_ENV = 'production';
+    const profiler = new Profiler({ channel: { port: 0 } });
+    expect(await profiler.ready).toBeNull();
+  });
+
+  it('can be switched off', async () => {
+    delete process.env.NODE_ENV;
+    const profiler = new Profiler({ channel: false });
+    expect(await profiler.ready).toBeNull();
+  });
+
+  it('closes cleanly', async () => {
+    const profiler = new Profiler({ channel: { port: 0 } });
+    const url = await profiler.ready;
+    await profiler.close();
+    expect(profiler.channelUrl).toBeNull();
+    await expect(fetch(`${url}/health`)).rejects.toThrow();
+  });
+
+  it('uses allowLoadOn given at construction', async () => {
+    const profiler = new Profiler({ allowLoadOn: ['POST /search'] });
+    profiler.start()({
+      method: 'POST',
+      route: '/search',
+      statusCode: 200,
+      request: captured({ url: '/search', origin: 'http://127.0.0.1:1' }),
+    });
+    await expect(profiler.runLoad({ method: 'POST', route: '/search' })).rejects.toThrow(/cannot reach/);
+  });
+
+  it('falls back to the recording origin as the run target', async () => {
+    const profiler = new Profiler();
+    profiler.start()({
+      method: 'GET',
+      route: '/users/:id',
+      statusCode: 200,
+      request: captured({ origin: 'http://127.0.0.1:1' }),
+    });
+    await expect(profiler.runLoad({ method: 'GET', route: '/users/:id' })).rejects.toThrow(
+      /cannot reach http:\/\/127\.0\.0\.1:1/,
+    );
   });
 });

@@ -15,6 +15,7 @@ export interface MaskedRecording {
   method: string;
   route: string;
   url: string;
+  origin: string;
   headers: Record<string, string>;
   body: BodySummary;
   recordedAt: number;
@@ -25,6 +26,7 @@ export function maskRecording(recording: RecordedRequest): MaskedRecording {
     method: recording.method,
     route: recording.route,
     url: maskUrl(recording.url, recording.route),
+    origin: recording.origin,
     headers: maskHeaders(recording.headers),
     body: summarizeBody(recording),
     recordedAt: recording.recordedAt,

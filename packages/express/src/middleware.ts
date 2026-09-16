@@ -4,16 +4,18 @@ import {
   CapturedRequest,
   LOAD_HEADER,
   LoadResult,
+  LocalChannelOptions,
   Profiler,
   RecordedRequest,
 } from '@api-profiler/node';
 
 export interface ProfilerOptions extends MetricStoreOptions {
   allowLoadOn?: string[];
+  channel?: LocalChannelOptions | false;
 }
 
 export interface LoadTestOptions {
-  target: string;
+  target?: string;
   connections?: number;
   duration?: number;
 }
@@ -25,11 +27,13 @@ export interface ProfilerMiddleware extends RequestHandler {
   loadTest(method: string, route: string, options: LoadTestOptions): Promise<LoadResult>;
   loadResults(): LoadResult[];
   loadResult(method: string, route: string): LoadResult | undefined;
+  readonly channelUrl: string | null;
+  readonly ready: Promise<string | null>;
+  close(): Promise<void>;
 }
 
 export function profiler(options: ProfilerOptions = {}): ProfilerMiddleware {
-  const { allowLoadOn, ...storeOptions } = options;
-  const instance = new Profiler(storeOptions);
+  const instance = new Profiler(options);
 
   const middleware: RequestHandler = (req, res, next) => {
     const done = instance.start();
@@ -48,21 +52,28 @@ export function profiler(options: ProfilerOptions = {}): ProfilerMiddleware {
     next();
   };
 
-  return Object.assign(middleware, {
+  const api = Object.assign(middleware, {
     stats: () => instance.stats(),
     recordings: () => instance.recordings(),
     isRecording: instance.isRecording,
-    loadTest: (method: string, route: string, run: LoadTestOptions) =>
-      instance.runLoad({ method, route, ...run, allowLoadOn }),
+    loadTest: (method: string, route: string, run: LoadTestOptions = {}) =>
+      instance.runLoad({ method, route, ...run }),
     loadResults: () => instance.loadResults(),
     loadResult: (method: string, route: string) => instance.loadResult(method, route),
+    ready: instance.ready,
+    close: () => instance.close(),
   });
+  // Object.assign would copy the getter's current value (null); it has to stay live.
+  Object.defineProperty(api, 'channelUrl', { get: () => instance.channelUrl, enumerable: true });
+  return api as ProfilerMiddleware;
 }
 
 function capture(req: Request, body: unknown): CapturedRequest {
   return {
     // originalUrl keeps the mount path and query that routers strip from req.url.
     url: req.originalUrl,
+    // Where the request arrived, so a replay can target it with no configuration.
+    origin: req.headers.host ? `${req.protocol}://${req.headers.host}` : '',
     headers: req.headers,
     body,
     bodyUnavailable: body === undefined && hasBody(req),
