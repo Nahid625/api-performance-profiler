@@ -11,6 +11,7 @@ import {
   statsFromCounts,
   summarize,
 } from '@api-profiler/core';
+import { LocalChannel, LocalChannelOptions } from './channel';
 import { checkLoadRun } from './guard';
 import { RecordedRequest, RequestRecorder, RequestSnapshot } from './recorder';
 import { LoadRunner, LoadRunSummary } from './runner';
@@ -27,10 +28,15 @@ export interface RequestOutcome {
 
 export type FinishRequest = (outcome: RequestOutcome) => void;
 
+export interface ProfilerOptions extends MetricStoreOptions {
+  channel?: LocalChannelOptions | false;
+  allowLoadOn?: string[];
+}
+
 export interface RunLoadOptions {
   method: string;
   route: string;
-  target: string;
+  target?: string;
   connections?: number;
   duration?: number;
   allowLoadOn?: string[];
@@ -58,20 +64,41 @@ export function recordingAllowed(env: string | undefined): boolean {
   return name === '' || RECORDING_ENVIRONMENTS.has(name);
 }
 
+// Test suites create many profilers in parallel; they must not race for a port.
+export function channelAllowed(env: string | undefined): boolean {
+  const name = env?.trim().toLowerCase() ?? '';
+  return name === '' || name === 'development';
+}
+
 export class Profiler {
   readonly store: MetricStore;
+  readonly ready: Promise<string | null>;
   private readonly recorder: RequestRecorder | null;
   private readonly runner = new LoadRunner();
+  private readonly channel: LocalChannel | null;
+  private readonly allowLoadOn: string[];
   private activeRun: { key: string; counts: RouteCounts } | null = null;
   private readonly loadSnapshots = new Map<string, LoadResult>();
 
-  constructor(options: MetricStoreOptions = {}) {
-    this.store = new MetricStore(options);
-    this.recorder = recordingAllowed(process.env.NODE_ENV) ? new RequestRecorder() : null;
+  constructor(options: ProfilerOptions = {}) {
+    const { channel, allowLoadOn, ...storeOptions } = options;
+    this.store = new MetricStore(storeOptions);
+    this.allowLoadOn = allowLoadOn ?? [];
+
+    const env = process.env.NODE_ENV;
+    this.recorder = recordingAllowed(env) ? new RequestRecorder() : null;
+
+    const wanted = channel !== false && (channel !== undefined || channelAllowed(env));
+    this.channel = wanted && recordingAllowed(env) ? new LocalChannel(this, channel || {}) : null;
+    this.ready = this.channel ? this.channel.start() : Promise.resolve(null);
   }
 
   get isRecording(): boolean {
     return this.recorder !== null;
+  }
+
+  get channelUrl(): string | null {
+    return this.channel?.url ?? null;
   }
 
   // hrtime is monotonic, so a clock adjustment mid-request can't skew duration.
@@ -116,12 +143,14 @@ export class Profiler {
     }
 
     const recording = this.recorder?.get(method, options.route);
+    // The recording remembers where it was received, so a run needs no configured target.
+    const target = options.target ?? recording?.origin ?? '';
     const check = checkLoadRun({
       method,
       route: options.route,
-      target: options.target,
+      target,
       recording,
-      allowLoadOn: options.allowLoadOn,
+      allowLoadOn: options.allowLoadOn ?? this.allowLoadOn,
       env: process.env.NODE_ENV,
     });
     if (!check.ok) {
@@ -135,7 +164,7 @@ export class Profiler {
     this.activeRun = { key, counts: emptyCounts('load', method, options.route) };
     try {
       const sent = await this.runner.run({
-        target: options.target,
+        target,
         recording,
         connections: options.connections,
         duration: options.duration,
@@ -144,7 +173,7 @@ export class Profiler {
       const result: LoadResult = {
         method,
         route: options.route,
-        target: options.target,
+        target,
         connections: sent.connections,
         durationSeconds: sent.durationSeconds,
         completedAt: Date.now(),
@@ -180,6 +209,10 @@ export class Profiler {
     this.store.clear();
     this.recorder?.clear();
     this.loadSnapshots.clear();
+  }
+
+  close(): Promise<void> {
+    return this.channel?.stop() ?? Promise.resolve();
   }
 }
 

@@ -15,6 +15,7 @@ export interface RequestSnapshot {
   method: string;
   route: string;
   url: string;
+  origin: string;
   headers: Record<string, string | string[] | undefined>;
   body: unknown;
   bodyUnavailable: boolean;
@@ -24,6 +25,7 @@ export interface RecordedRequest {
   method: string;
   route: string;
   url: string;
+  origin: string;
   headers: Record<string, string>;
   body: unknown;
   bodyUnavailable: boolean;
@@ -58,6 +60,7 @@ export class RequestRecorder {
       method: snapshot.method,
       route: snapshot.route,
       url: snapshot.url,
+      origin: snapshot.origin,
       headers: replayableHeaders(snapshot.headers),
       body,
       bodyUnavailable: snapshot.bodyUnavailable,

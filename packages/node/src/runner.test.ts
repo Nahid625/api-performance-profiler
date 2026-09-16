@@ -48,6 +48,7 @@ function recording(overrides: Partial<RecordedRequest> = {}): RecordedRequest {
     method: 'GET',
     route: '/users/:id',
     url: '/users/42?expand=orders',
+    origin: 'http://127.0.0.1:1',
     headers: { authorization: 'Bearer abc123xyz', 'x-tenant': 'acme' },
     body: undefined,
     bodyUnavailable: false,

@@ -36,6 +36,7 @@ async function serve(profiler: Profiler | null, status = 200): Promise<Served> {
           mode,
           request: {
             url: req.url ?? '/',
+            origin: `http://${req.headers.host ?? ''}`,
             headers: req.headers,
             body: raw ? JSON.parse(raw) : undefined,
             bodyUnavailable: false,

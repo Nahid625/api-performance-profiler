@@ -6,6 +6,7 @@ function recording(overrides: Partial<RecordedRequest> = {}): RecordedRequest {
     method: 'GET',
     route: '/users/:id',
     url: '/users/42',
+    origin: 'http://127.0.0.1:3000',
     headers: {},
     body: undefined,
     bodyUnavailable: false,

@@ -6,6 +6,7 @@ function snapshot(overrides: Partial<RequestSnapshot> = {}): RequestSnapshot {
     method: 'GET',
     route: '/users/:id',
     url: '/users/42',
+    origin: 'http://127.0.0.1:3000',
     headers: { authorization: 'Bearer abc123xyz' },
     body: undefined,
     bodyUnavailable: false,
