@@ -80,6 +80,7 @@ bound to `127.0.0.1` (default port 4780) serving `/health`, `/stats`,
 `/recordings` (masked only), `/load-results` and `POST /load-runs`. `Profiler`
 opens it automatically in development (`channel` option, `channelUrl`,
 `ready`, `close()`), recordings carry the `origin` they arrived on so a run
-needs no target, and Express passes it all through. Next: the `api-profiler`
-CLI package with `routes`/`stats`. `nestjs` and `vscode-extension` are still
-empty.
+needs no target, and Express passes it all through. `packages/cli` (npm name
+`api-profiler`, zero dependencies) has `routes`, `stats`, `load-results`,
+`--json`, `--port`. Next: `run` and the live table. `nestjs` and
+`vscode-extension` are still empty.
