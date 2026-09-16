@@ -8,12 +8,15 @@ describe('parseArgs', () => {
     expect(parsed.flags).toMatchObject({ port: 4790, json: true, help: false });
   });
 
-  it('defaults the port and booleans', () => {
+  it('defaults the port, booleans and thresholds', () => {
     expect(parseArgs(['stats'], 4780).flags).toEqual({
       port: 4780,
       json: false,
       help: false,
       version: false,
+      once: false,
+      fast: 200,
+      warn: 500,
     });
   });
 
@@ -30,6 +33,14 @@ describe('parseArgs', () => {
     expect(flags).toMatchObject({ connections: 20, duration: 3, target: 'http://127.0.0.1:3000' });
   });
 
+  it('parses live options', () => {
+    expect(parseArgs(['--fast', '100', '--warn', '300', '--once'], 4780).flags).toMatchObject({
+      fast: 100,
+      warn: 300,
+      once: true,
+    });
+  });
+
   it('returns no command when only flags are given', () => {
     expect(parseArgs(['--json'], 4780).command).toBeNull();
   });
@@ -39,6 +50,7 @@ describe('parseArgs', () => {
     [['--port', 'abc'], /--port must be a positive number/],
     [['--duration', '0'], /--duration must be a positive number/],
     [['--colour'], /unknown option --colour/],
+    [['--fast', '500', '--warn', '500'], /--warn .* greater than --fast/],
   ])('rejects %j', (argv, message) => {
     expect(() => parseArgs(argv, 4780)).toThrow(message);
   });
