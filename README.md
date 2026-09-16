@@ -59,15 +59,31 @@ your handlers can skip side effects (mail, payments) during a run.
 With the app running, open another terminal:
 
 ```bash
-npx api-profiler routes          # routes seen so far and whether each has a recording
-npx api-profiler stats           # per-route figures for the last window
-npx api-profiler load-results    # results of past load runs
-npx api-profiler stats --json    # raw JSON
-npx api-profiler --port 4790 …   # if you changed the channel port
+npx api-profiler                        # live table, refreshed every second
+npx api-profiler run GET /users/:id     # replay the recorded request under load
+npx api-profiler routes                 # routes seen so far and whether each has a recording
+npx api-profiler stats                  # per-route figures for the last window
+npx api-profiler load-results           # results of past load runs
+npx api-profiler stats --json           # raw JSON
+npx api-profiler --port 4790 …          # if you changed the channel port
 ```
 
-The CLI has no dependencies of its own; it only talks to the local channel
-below.
+```
+api-profiler · app http://127.0.0.1:4780 · v0.0.0 · 14:32:10
+
+Observed traffic
+    route            count  avg      max      errors  req/s  when
+🟢  GET /users/:id   12     1.7ms    8.9ms    0%      2.4    live
+🟡  GET /slow        3      202.1ms  202.5ms  0%      --     40s ago
+
+Load tests
+🟢  GET /users/:id   10694  0.1ms    1.3ms    0%      3553   load · 2 min ago
+```
+
+🟢 below 200ms average, 🟡 below 500ms, 🔴 from there (`--fast`, `--warn` to
+change). A route that stops receiving requests keeps its last figures, dimmed,
+with their age — a stale number is never shown as current. The CLI has no
+dependencies of its own; it only talks to the local channel below.
 
 ## Local channel
 

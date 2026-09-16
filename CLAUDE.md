@@ -82,5 +82,7 @@ opens it automatically in development (`channel` option, `channelUrl`,
 `ready`, `close()`), recordings carry the `origin` they arrived on so a run
 needs no target, and Express passes it all through. `packages/cli` (npm name
 `api-profiler`, zero dependencies) has `routes`, `stats`, `load-results`,
-`--json`, `--port`. Next: `run` and the live table. `nestjs` and
+`--json`, `--port`, `run METHOD ROUTE`, and a live table (default command)
+with 🟢🟡🔴 thresholds and dimmed, aged rows for routes that went quiet. Next:
+the example app spawns the real CLI end to end. `nestjs` and
 `vscode-extension` are still empty.
