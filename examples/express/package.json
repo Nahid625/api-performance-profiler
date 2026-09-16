@@ -5,7 +5,8 @@
   "description": "Runnable Express app showing @api-profiler/express on real requests.",
   "scripts": {
     "start": "node server.js",
-    "demo": "node demo.js"
+    "demo": "node demo.js",
+    "load": "node load.js"
   },
   "dependencies": {
     "@api-profiler/express": "^0.0.0",

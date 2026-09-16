@@ -1,6 +1,7 @@
 const { createApp, DEMO_TOKEN } = require('./app');
 const { formatTable } = require('./table');
 const { formatRecordings } = require('./recordings');
+const { formatLoadResults } = require('./loadresults');
 
 const port = Number(process.env.PORT) || 3000;
 const { app, profiler } = createApp();
@@ -27,5 +28,6 @@ setInterval(() => {
     stats,
     isRecording: profiler.isRecording,
   });
-  console.log(`\n${new Date().toLocaleTimeString()}\n${formatTable(stats)}\n\nRecordings\n${recordings}`);
+  const loads = formatLoadResults(profiler.loadResults());
+  console.log(`\n${new Date().toLocaleTimeString()}\n${formatTable(stats)}\n\nRecordings\n${recordings}\n\nLoad tests\n${loads}`);
 }, 5000);
