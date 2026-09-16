@@ -74,5 +74,9 @@ Phase 3 (load runner) complete: `node` has `checkLoadRun` (the safety gate),
 whole run); `express` tags load traffic, takes `allowLoadOn` and exposes
 `p.loadTest()` / `p.loadResults()`; the example app runs and checks a real
 load test (`npm run demo`) and offers `npm run load -- GET /users/42`.
-Next: Phase 4 checklist (CLI). `nestjs` and `vscode-extension` are still
-empty.
+
+Phase 4 (CLI) in progress: `node` has `LocalChannel`, a read-only JSON server
+bound to `127.0.0.1` (default port 4780) serving `/health`, `/stats`,
+`/recordings` (masked only) and `/load-results`. Next: wire it into
+`Profiler`/Express, capture `origin`, add `POST /load-runs`. `nestjs` and
+`vscode-extension` are still empty.

@@ -14,3 +14,5 @@ export {
   DEFAULT_DURATION_SECONDS,
   REQUEST_TIMEOUT_SECONDS,
 } from './runner';
+export type { LocalChannelOptions } from './channel';
+export { LocalChannel, DEFAULT_CHANNEL_PORT, VERSION } from './channel';
