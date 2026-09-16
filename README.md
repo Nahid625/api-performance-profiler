@@ -54,6 +54,21 @@ is listed in `profiler({ allowLoadOn: ['POST /search'] })` — replaying a `POST
 writes real data. Every replayed request carries `x-api-profiler-load: 1`, so
 your handlers can skip side effects (mail, payments) during a run.
 
+## CLI
+
+With the app running, open another terminal:
+
+```bash
+npx api-profiler routes          # routes seen so far and whether each has a recording
+npx api-profiler stats           # per-route figures for the last window
+npx api-profiler load-results    # results of past load runs
+npx api-profiler stats --json    # raw JSON
+npx api-profiler --port 4790 …   # if you changed the channel port
+```
+
+The CLI has no dependencies of its own; it only talks to the local channel
+below.
+
 ## Local channel
 
 In development the profiler also opens a small JSON server on
