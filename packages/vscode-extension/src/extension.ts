@@ -1,19 +1,28 @@
 import * as vscode from 'vscode';
+import { ChannelClient, Thresholds } from 'api-profiler';
 import { Connection, ConnectionState } from './connection';
+import { RoutesPanel } from './panel';
 
 let connection: Connection | null = null;
 
 export function activate(context: vscode.ExtensionContext): void {
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
-  status.command = 'apiProfiler.showStatus';
+  status.command = 'apiProfiler.showRoutes';
   status.show();
   context.subscriptions.push(status);
 
+  let panel: RoutesPanel | null = null;
+  let tree: vscode.TreeView<unknown> | null = null;
+
   const connect = () => {
     connection?.stop();
+    tree?.dispose();
     connection = new Connection({ port: configuredPort(), isInstalled: profilerInstalled });
     connection.onChange((state) => render(status, state));
     render(status, connection.state);
+    panel = new RoutesPanel(connection, thresholds);
+    tree = vscode.window.createTreeView('apiProfiler.routes', { treeDataProvider: panel, showCollapseAll: false });
+    context.subscriptions.push(tree);
     connection.start();
   };
   connect();
@@ -22,6 +31,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('apiProfiler.port')) {
         connect();
+      } else if (event.affectsConfiguration('apiProfiler.thresholds')) {
+        panel?.forget();
       }
     }),
     vscode.window.onDidChangeWindowState((window) => {
@@ -32,7 +43,11 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand('apiProfiler.refresh', () => connection?.refresh()),
+    vscode.commands.registerCommand('apiProfiler.showRoutes', () =>
+      vscode.commands.executeCommand('apiProfiler.routes.focus'),
+    ),
     vscode.commands.registerCommand('apiProfiler.showStatus', () => showStatus(connection?.state)),
+    vscode.commands.registerCommand('apiProfiler.clearMetrics', () => clearMetrics(panel)),
     { dispose: () => connection?.stop() },
   );
 }
@@ -44,6 +59,35 @@ export function deactivate(): void {
 
 function configuredPort(): number {
   return vscode.workspace.getConfiguration('apiProfiler').get<number>('port', 4780);
+}
+
+function thresholds(): Thresholds {
+  const config = vscode.workspace.getConfiguration('apiProfiler.thresholds');
+  const fast = config.get<number>('fast', 200);
+  const warn = config.get<number>('warn', 500);
+  return warn > fast ? { fast, warn } : { fast: 200, warn: 500 };
+}
+
+async function clearMetrics(panel: RoutesPanel | null): Promise<void> {
+  if (!connection || connection.state.kind !== 'connected') {
+    void vscode.window.showWarningMessage('API Profiler: no app connected, nothing to clear.');
+    return;
+  }
+  const choice = await vscode.window.showWarningMessage(
+    'Forget all metrics, recordings and load results in the running app?',
+    { modal: true },
+    'Clear',
+  );
+  if (choice !== 'Clear') {
+    return;
+  }
+  try {
+    await new ChannelClient(connection.url).reset();
+    panel?.forget();
+    await connection.refresh();
+  } catch (error) {
+    void vscode.window.showErrorMessage(`API Profiler: ${(error as Error).message}`);
+  }
 }
 
 async function profilerInstalled(): Promise<boolean> {

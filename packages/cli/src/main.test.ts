@@ -286,3 +286,18 @@ describe('run and live', () => {
     expect(errors.join('\n')).toContain('could not reach');
   });
 });
+
+describe('clear', () => {
+  it('asks the app to forget everything', async () => {
+    const { profiler, port } = await liveProfiler();
+    try {
+      const c = capture();
+      expect(await main(['clear', '--port', port], c.io, '0')).toBe(0);
+      expect(c.stdout()).toBe('Cleared.');
+      expect(profiler.stats()).toEqual([]);
+      expect(profiler.recordings()).toEqual([]);
+    } finally {
+      await profiler.close();
+    }
+  });
+});

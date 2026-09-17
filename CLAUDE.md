@@ -90,5 +90,8 @@ Phase 5 (VS Code extension) in progress: `packages/vscode-extension`
 (`api-profiler-vscode`, esbuild-bundled, reuses the CLI's `ChannelClient`) has
 a VS Code-free `Connection` (polls the channel: 1s connected, 5s unreachable,
 paused when the window is hidden; states connected / unreachable /
-setup-needed) and a status bar item. Next: the routes sidebar panel. `nestjs`
-is still empty.
+setup-needed), a status bar item, and a Routes sidebar (activity bar view)
+listing observed routes slowest-first with 🟢🟡🔴, figures, age and stale
+rows, plus a Load tests section; commands Refresh, Clear Metrics (channel
+`POST /reset`, also `api-profiler clear`), Show Routes. Next: AST source
+mapping of routes to file:line. `nestjs` is still empty.

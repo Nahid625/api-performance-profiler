@@ -54,6 +54,10 @@ export class ChannelClient {
     return this.get('/load-results');
   }
 
+  reset(): Promise<{ ok: boolean }> {
+    return this.send('/reset', { method: 'POST' });
+  }
+
   startRun(request: RunRequest): Promise<LoadResult> {
     return this.send('/load-runs', {
       method: 'POST',
