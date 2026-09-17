@@ -76,6 +76,11 @@ export class LocalChannel {
       await this.startRun(req, res);
       return;
     }
+    if (req.method === 'POST' && path === '/reset') {
+      this.profiler.reset();
+      send(res, 200, { ok: true });
+      return;
+    }
     if (req.method !== 'GET') {
       send(res, 405, { error: 'method not allowed' });
       return;

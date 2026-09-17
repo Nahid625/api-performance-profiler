@@ -18,6 +18,7 @@ Usage
   api-profiler routes              routes seen by the app and whether each has a recording
   api-profiler stats               per-route figures for the last window (observed and load)
   api-profiler load-results        results of past load runs
+  api-profiler clear               forget all metrics, recordings and load results
   api-profiler run GET /users/:id  replay the recorded request under load and report
 
 Options
@@ -71,6 +72,11 @@ export async function main(argv: string[], io: Io, version: string): Promise<num
       case 'load-results': {
         const results = await client.loadResults();
         io.out(flags.json ? JSON.stringify(results, null, 2) : formatLoadResults(results));
+        return 0;
+      }
+      case 'clear': {
+        await client.reset();
+        io.out('Cleared.');
         return 0;
       }
       case 'run': {

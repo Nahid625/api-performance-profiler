@@ -251,3 +251,21 @@ describe('POST /load-runs', () => {
     }
   });
 });
+
+describe('POST /reset', () => {
+  it('forgets everything the profiler holds', async () => {
+    const profiler = new Profiler();
+    recordOne(profiler);
+    const { channel, url } = await started(profiler);
+    try {
+      const res = await fetch(`${url}/reset`, { method: 'POST' });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true });
+      expect(profiler.stats()).toEqual([]);
+      expect(profiler.recordings()).toEqual([]);
+      expect(await (await fetch(`${url}/stats`)).json()).toEqual([]);
+    } finally {
+      await channel.stop();
+    }
+  });
+});
