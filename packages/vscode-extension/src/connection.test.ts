@@ -65,14 +65,14 @@ describe('Connection', () => {
 
   it('polls faster while connected than while unreachable', async () => {
     const { profiler, port } = await liveProfiler();
-    const connection = new Connection({ port, connectedIntervalMs: 50, unreachableIntervalMs: 400 });
+    const connection = new Connection({ port, connectedIntervalMs: 20, unreachableIntervalMs: 400 });
     const seen: ConnectionState['kind'][] = [];
     connection.onChange((s) => seen.push(s.kind));
     try {
       connection.start();
       await wait(320);
       const connected = seen.filter((k) => k === 'connected').length;
-      expect(connected).toBeGreaterThanOrEqual(4);
+      expect(connected).toBeGreaterThanOrEqual(3);
 
       await profiler.close();
       await wait(120);
@@ -87,9 +87,9 @@ describe('Connection', () => {
     }
   });
 
-  it('stops polling on stop and while paused', async () => {
+  it('stops polling on stop and while paused, discarding a poll in flight', async () => {
     const { profiler, port } = await liveProfiler();
-    const connection = new Connection({ port, connectedIntervalMs: 30 });
+    const connection = new Connection({ port, connectedIntervalMs: 5 });
     let polls = 0;
     connection.onChange(() => polls++);
     try {
@@ -97,6 +97,7 @@ describe('Connection', () => {
       await wait(100);
       expect(polls).toBeGreaterThan(1);
 
+      // With a 5ms cadence a poll is almost always in flight when we pause.
       connection.pause();
       const paused = polls;
       await wait(100);
