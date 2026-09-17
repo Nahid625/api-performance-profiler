@@ -79,20 +79,28 @@ export class Connection {
   }
 
   async refresh(): Promise<ConnectionState> {
-    let next: ConnectionState;
+    return this.apply(await this.fetchState());
+  }
+
+  private async fetchState(): Promise<ConnectionState> {
     try {
       const [health, stats, loadResults] = await Promise.all([
         this.client.health(),
         this.client.stats(),
         this.client.loadResults(),
       ]);
-      next = { kind: 'connected', url: this.client.baseUrl, version: health.version, stats, loadResults };
+      return { kind: 'connected', url: this.client.baseUrl, version: health.version, stats, loadResults };
     } catch (error) {
       if (!(error instanceof ChannelUnreachable)) {
         throw error;
       }
-      next = (await this.isInstalled()) ? { kind: 'unreachable', url: this.client.baseUrl } : { kind: 'setup-needed' };
+      return (await this.isInstalled())
+        ? { kind: 'unreachable', url: this.client.baseUrl }
+        : { kind: 'setup-needed' };
     }
+  }
+
+  private apply(next: ConnectionState): ConnectionState {
     this.current = next;
     for (const listener of this.listeners) {
       listener(next);
@@ -104,13 +112,18 @@ export class Connection {
     if (!this.running || this.paused) {
       return;
     }
+    let next: ConnectionState | null = null;
     try {
-      await this.refresh();
+      next = await this.fetchState();
     } catch {
       // A malformed answer is treated like a missed poll; the next one will retry.
     }
+    // A poll that was in flight when pause() or stop() was called is discarded.
     if (!this.running || this.paused) {
       return;
+    }
+    if (next) {
+      this.apply(next);
     }
     const delay = this.current.kind === 'connected' ? this.connectedInterval : this.unreachableInterval;
     this.timer = setTimeout(() => void this.tick(), delay);
