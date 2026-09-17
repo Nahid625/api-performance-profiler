@@ -83,6 +83,12 @@ opens it automatically in development (`channel` option, `channelUrl`,
 needs no target, and Express passes it all through. `packages/cli` (npm name
 `api-profiler`, zero dependencies) has `routes`, `stats`, `load-results`,
 `--json`, `--port`, `run METHOD ROUTE`, and a live table (default command)
-with 🟢🟡🔴 thresholds and dimmed, aged rows for routes that went quiet. Next:
-the example app spawns the real CLI end to end. `nestjs` and
-`vscode-extension` are still empty.
+with 🟢🟡🔴 thresholds and dimmed, aged rows for routes that went quiet. The
+CLI end-to-end demo is deferred to Phase 7.
+
+Phase 5 (VS Code extension) in progress: `packages/vscode-extension`
+(`api-profiler-vscode`, esbuild-bundled, reuses the CLI's `ChannelClient`) has
+a VS Code-free `Connection` (polls the channel: 1s connected, 5s unreachable,
+paused when the window is hidden; states connected / unreachable /
+setup-needed) and a status bar item. Next: the routes sidebar panel. `nestjs`
+is still empty.
