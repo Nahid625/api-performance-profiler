@@ -1,19 +1,55 @@
 {
-  "name": "@api-profiler/vscode-extension",
+  "name": "api-profiler-vscode",
+  "displayName": "API Profiler",
+  "description": "See how fast your API routes actually are, next to where they are written.",
   "version": "0.0.0",
   "private": true,
-  "description": "VS Code extension for api-performance-profiler (not yet implemented).",
+  "publisher": "nahid625",
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
   ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "API Profiler",
+      "properties": {
+        "apiProfiler.port": {
+          "type": "number",
+          "default": 4780,
+          "description": "Port of the local channel the app opens (profiler({ channel: { port } }))."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "apiProfiler.refresh",
+        "title": "API Profiler: Refresh"
+      },
+      {
+        "command": "apiProfiler.showStatus",
+        "title": "API Profiler: Show Status"
+      }
+    ]
+  },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc --noEmit && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js --log-level=warning"
+  },
+  "dependencies": {
+    "api-profiler": "^0.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "@types/node": "^20.0.0"
+    "@api-profiler/core": "^0.0.0",
+    "@api-profiler/node": "^0.0.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.100.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.5.0"
   }
 }

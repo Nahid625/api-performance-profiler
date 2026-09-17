@@ -2,7 +2,12 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@api-profiler/*": ["./packages/*/src"]
+      "@api-profiler/*": [
+        "./packages/*/src"
+      ],
+      "api-profiler": [
+        "./packages/cli/src"
+      ]
     }
   }
 }
