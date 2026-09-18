@@ -5,6 +5,8 @@ import type { ConnectionState } from './connection';
 
 export interface Row {
   key: string;
+  method: string;
+  route: string;
   label: string;
   description: string;
   tooltip: string;
@@ -61,6 +63,8 @@ function sections(
       const when = stale ? age(lastSeenAt, now) : 'live';
       return {
         key,
+        method: s.method,
+        route: s.route,
         label: `${light(s.averageMs, thresholds)} ${key}`,
         description: `${ms(s.averageMs)} · ${s.count} req · ${rps(s.rps)} req/s · ${when}`,
         tooltip: tooltipFor(s, when, null),
@@ -78,6 +82,8 @@ function sections(
       if (!r.stats) {
         return {
           key: `load ${key}`,
+          method: r.method,
+          route: r.route,
           label: `⚪ ${key}`,
           description: `${r.sent.responses} responses · ${when}`,
           tooltip: `**${key}**\n\n${r.note}\n\nSent ${r.sent.requestsSent}, ${r.sent.responses} responses, ${r.sent.non2xx} non-2xx, ${r.sent.errors} errors.`,
@@ -87,6 +93,8 @@ function sections(
       }
       return {
         key: `load ${key}`,
+        method: r.method,
+        route: r.route,
         label: `${light(r.stats.averageMs, thresholds)} ${key}`,
         description: `${ms(r.stats.averageMs)} · ${r.stats.count} req · ${rps(r.stats.rps)} req/s · ${when}`,
         tooltip: tooltipFor(r.stats, when, `${r.connections} connections × ${r.durationSeconds.toFixed(0)}s against ${r.target}`),

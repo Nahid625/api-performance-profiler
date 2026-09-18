@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { newLiveState, Thresholds } from 'api-profiler';
 import type { Connection } from './connection';
+import type { RouteIndex } from './routeIndex';
 import { buildPanel, Row, Section } from './rows';
 
 type Node = { kind: 'section'; section: Section } | { kind: 'row'; row: Row } | { kind: 'message'; text: string; detail?: string };
@@ -12,9 +13,11 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
 
   constructor(
     private readonly connection: Connection,
+    private readonly index: RouteIndex,
     private readonly thresholds: () => Thresholds,
   ) {
     connection.onChange(() => this.changed.fire(undefined));
+    index.onDidChange(() => this.changed.fire(undefined));
   }
 
   forget(): void {
@@ -33,8 +36,20 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
         const item = new vscode.TreeItem(node.row.label);
         item.id = node.row.key;
         item.description = node.row.description;
-        item.tooltip = new vscode.MarkdownString(node.row.tooltip);
         item.contextValue = node.row.stale ? 'stale-route' : 'route';
+        const location = this.index.find(node.row.method, node.row.route);
+        if (location) {
+          const where = vscode.workspace.asRelativePath(location.file);
+          const note = location.prefixKnown ? '' : ' (mount prefix unknown, matched by path tail)';
+          item.tooltip = new vscode.MarkdownString(`${node.row.tooltip}\n\nDefined in ${where}:${location.line}${note}`);
+          item.command = {
+            command: 'vscode.open',
+            title: 'Open route',
+            arguments: [vscode.Uri.file(location.file), { selection: new vscode.Range(location.line - 1, 0, location.line - 1, 0) }],
+          };
+        } else {
+          item.tooltip = new vscode.MarkdownString(`${node.row.tooltip}\n\nSource not found in this workspace`);
+        }
         return item;
       }
       case 'message': {

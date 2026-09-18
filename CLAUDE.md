@@ -93,5 +93,11 @@ paused when the window is hidden; states connected / unreachable /
 setup-needed), a status bar item, and a Routes sidebar (activity bar view)
 listing observed routes slowest-first with 🟢🟡🔴, figures, age and stale
 rows, plus a Load tests section; commands Refresh, Clear Metrics (channel
-`POST /reset`, also `api-profiler clear`), Show Routes. Next: AST source
-mapping of routes to file:line. `nestjs` is still empty.
+`POST /reset`, also `api-profiler clear` in the CLI), Show Routes, Show
+Status. `discover.ts` (VS Code-free, TypeScript compiler API) maps routes to
+`{ method, route, file, line }`: Express `app|router.METHOD`, `route()` chains,
+`app.use('/prefix', router)` traced across files via import/require, else
+`prefixKnown: false` and matched by path tail; NestJS `@Controller` + `@Get`
+plus `setGlobalPrefix`. `RouteIndex` rescans on save (debounced); sidebar rows
+open the defining line and say where the route lives. Next: inline
+decorations beside the route line. `nestjs` is still empty.
