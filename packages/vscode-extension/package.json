@@ -1,6 +1,6 @@
 {
   "name": "api-profiler-vscode",
-  "displayName": "API Profiler",
+  "displayName": "API Performance Profiler",
   "description": "See how fast your API routes actually are, next to where they are written.",
   "version": "0.0.0",
   "private": true,
