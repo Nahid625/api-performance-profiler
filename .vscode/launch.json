@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run API Profiler extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension",
+        "${workspaceFolder}/examples/express"
+      ],
+      "preLaunchTask": "build-extension"
+    }
+  ]
+}
