@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ChannelClient, Thresholds } from 'api-profiler';
 import { Connection, ConnectionState } from './connection';
 import { RoutesPanel } from './panel';
+import { RouteIndex } from './routeIndex';
 
 let connection: Connection | null = null;
 
@@ -11,6 +12,8 @@ export function activate(context: vscode.ExtensionContext): void {
   status.show();
   context.subscriptions.push(status);
 
+  const index = new RouteIndex();
+  context.subscriptions.push(index);
   let panel: RoutesPanel | null = null;
   let tree: vscode.TreeView<unknown> | null = null;
 
@@ -20,7 +23,7 @@ export function activate(context: vscode.ExtensionContext): void {
     connection = new Connection({ port: configuredPort(), isInstalled: profilerInstalled });
     connection.onChange((state) => render(status, state));
     render(status, connection.state);
-    panel = new RoutesPanel(connection, thresholds);
+    panel = new RoutesPanel(connection, index, thresholds);
     tree = vscode.window.createTreeView('apiProfiler.routes', { treeDataProvider: panel, showCollapseAll: false });
     context.subscriptions.push(tree);
     connection.start();
@@ -42,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
         connection?.pause();
       }
     }),
-    vscode.commands.registerCommand('apiProfiler.refresh', () => connection?.refresh()),
+    vscode.commands.registerCommand('apiProfiler.refresh', () => Promise.all([connection?.refresh(), index.refresh()])),
     vscode.commands.registerCommand('apiProfiler.showRoutes', () =>
       vscode.commands.executeCommand('apiProfiler.routes.focus'),
     ),
