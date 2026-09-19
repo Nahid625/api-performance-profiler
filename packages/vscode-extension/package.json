@@ -25,6 +25,11 @@
           "default": 4780,
           "description": "Port of the local channel the app opens (profiler({ channel: { port } }))."
         },
+        "apiProfiler.decorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show each route's latency at the end of the line where it is declared."
+        },
         "apiProfiler.thresholds.fast": {
           "type": "number",
           "default": 200,
@@ -72,6 +77,10 @@
       {
         "command": "apiProfiler.showStatus",
         "title": "API Profiler: Show Status"
+      },
+      {
+        "command": "apiProfiler.toggleDecorations",
+        "title": "API Profiler: Toggle Inline Latency"
       }
     ],
     "menus": {

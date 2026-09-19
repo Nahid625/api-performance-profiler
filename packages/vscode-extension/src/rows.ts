@@ -10,6 +10,8 @@ export interface Row {
   label: string;
   description: string;
   tooltip: string;
+  // Short form for the editor: "🟢 84.0ms · live", never a number that was not measured.
+  inline: string;
   stale: boolean;
   averageMs: number;
 }
@@ -68,6 +70,7 @@ function sections(
         label: `${light(s.averageMs, thresholds)} ${key}`,
         description: `${ms(s.averageMs)} · ${s.count} req · ${rps(s.rps)} req/s · ${when}`,
         tooltip: tooltipFor(s, when, null),
+        inline: `${light(s.averageMs, thresholds)} ${ms(s.averageMs)} · ${when}`,
         stale,
         averageMs: s.averageMs,
       };
@@ -87,6 +90,7 @@ function sections(
           label: `⚪ ${key}`,
           description: `${r.sent.responses} responses · ${when}`,
           tooltip: `**${key}**\n\n${r.note}\n\nSent ${r.sent.requestsSent}, ${r.sent.responses} responses, ${r.sent.non2xx} non-2xx, ${r.sent.errors} errors.`,
+          inline: `⚪ no figures · ${when}`,
           stale: false,
           averageMs: 0,
         };
@@ -98,6 +102,7 @@ function sections(
         label: `${light(r.stats.averageMs, thresholds)} ${key}`,
         description: `${ms(r.stats.averageMs)} · ${r.stats.count} req · ${rps(r.stats.rps)} req/s · ${when}`,
         tooltip: tooltipFor(r.stats, when, `${r.connections} connections × ${r.durationSeconds.toFixed(0)}s against ${r.target}`),
+        inline: `${light(r.stats.averageMs, thresholds)} ${ms(r.stats.averageMs)} · ${when}`,
         stale: false,
         averageMs: r.stats.averageMs,
       };

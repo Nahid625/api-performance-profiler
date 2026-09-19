@@ -72,6 +72,7 @@ describe('buildPanel', () => {
     expect(rows[1].description).toContain('-- req/s');
     expect(rows[0].tooltip).toContain('Average 300.0ms');
     expect(rows[0].tooltip).toContain('observed traffic');
+    expect(rows[0].inline).toBe('🟡 300.0ms · live');
     expect(rows[0].stale).toBe(false);
   });
 
@@ -87,6 +88,7 @@ describe('buildPanel', () => {
     expect(row.stale).toBe(true);
     expect(row.description).toContain('40s ago');
     expect(row.description).not.toContain('live');
+    expect(row.inline).toBe('🟡 300.0ms · 40s ago');
   });
 
   it('shows load runs in their own section, never mixed with observed rows', () => {
@@ -102,6 +104,7 @@ describe('buildPanel', () => {
     expect(load.description).toContain('load · 2 min ago');
     expect(load.tooltip).toContain('load test');
     expect(load.tooltip).toContain('5 connections × 2s');
+    expect(load.inline).toBe('🟢 1.2ms · load · 2 min ago');
   });
 
   it('shows a run without server-side figures honestly', () => {
@@ -109,7 +112,7 @@ describe('buildPanel', () => {
       connected([], [run({ stats: null, note: 'the target did not report through this profiler' })]),
       newLiveState(),
       T,
-      1_000_000,
+      1_120_000,
     );
     if (p.kind !== 'sections') {
       throw new Error('expected sections');
@@ -117,5 +120,7 @@ describe('buildPanel', () => {
     const [load] = p.sections[1].rows;
     expect(load.label).toBe('⚪ GET /users/:id');
     expect(load.tooltip).toContain('did not report');
+    expect(load.inline).toBe('⚪ no figures · load · 2 min ago');
+    expect(load.inline).not.toMatch(/\d+ms/);
   });
 });
