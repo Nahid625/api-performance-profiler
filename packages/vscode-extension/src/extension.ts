@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ChannelClient, Thresholds } from 'api-profiler';
 import { Connection, ConnectionState } from './connection';
 import { InlineDecorations } from './decorations';
+import { LoadRuns, LoadSettings } from './loadRuns';
 import { RoutesPanel } from './panel';
 import { RouteIndex } from './routeIndex';
 import { addMiddleware, install, Previews } from './setup';
@@ -20,18 +21,21 @@ export function activate(context: vscode.ExtensionContext): void {
   let panel: RoutesPanel | null = null;
   let tree: vscode.TreeView<unknown> | null = null;
   let inline: InlineDecorations | null = null;
+  let loads: LoadRuns | null = null;
 
   const connect = () => {
     connection?.stop();
     tree?.dispose();
     inline?.dispose();
+    loads?.dispose();
     connection = new Connection({ port: configuredPort(), isInstalled: profilerInstalled });
     connection.onChange((state) => render(status, state));
     render(status, connection.state);
     panel = new RoutesPanel(connection, index, thresholds);
     tree = vscode.window.createTreeView('apiProfiler.routes', { treeDataProvider: panel, showCollapseAll: false });
     inline = new InlineDecorations(panel, index, decorationsEnabled);
-    context.subscriptions.push(tree, inline);
+    loads = new LoadRuns(connection, index, loadSettings);
+    context.subscriptions.push(tree, inline, loads);
     connection.start();
   };
   connect();
@@ -59,6 +63,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand('apiProfiler.showStatus', () => showStatus(connection?.state)),
     vscode.commands.registerCommand('apiProfiler.clearMetrics', () => clearMetrics(panel)),
+    vscode.commands.registerCommand('apiProfiler.loadTest', (target: { method: string; route: string }) => loads?.start(target)),
+    vscode.commands.registerCommand('apiProfiler.explainLoadTest', (target: { method: string; route: string }) => loads?.explain(target)),
     vscode.commands.registerCommand('apiProfiler.install', install),
     vscode.commands.registerCommand('apiProfiler.addMiddleware', () => addMiddleware(previews)),
     vscode.commands.registerCommand('apiProfiler.toggleDecorations', () =>
@@ -77,6 +83,16 @@ export function deactivate(): void {
 
 function configuredPort(): number {
   return vscode.workspace.getConfiguration('apiProfiler').get<number>('port', 4780);
+}
+
+function loadSettings(): LoadSettings {
+  const config = vscode.workspace.getConfiguration('apiProfiler.load');
+  const connections = config.get<number>('connections', 10);
+  const duration = config.get<number>('duration', 5);
+  return {
+    connections: Number.isInteger(connections) && connections >= 1 && connections <= 100 ? connections : 10,
+    duration: Number.isFinite(duration) && duration >= 1 && duration <= 60 ? duration : 5,
+  };
 }
 
 function decorationsEnabled(): boolean {

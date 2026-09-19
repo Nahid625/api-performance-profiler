@@ -5,7 +5,15 @@ import { ChannelClient, ChannelUnreachable, channelUrl } from 'api-profiler';
 export type ConnectionState =
   | { kind: 'setup-needed' }
   | { kind: 'unreachable'; url: string }
-  | { kind: 'connected'; url: string; version: string; stats: RouteStats[]; loadResults: LoadResult[] };
+  | {
+      kind: 'connected';
+      url: string;
+      version: string;
+      stats: RouteStats[];
+      loadResults: LoadResult[];
+      // "METHOD /route" keys that have a recording, so a load test can be offered honestly.
+      recorded: string[];
+    };
 
 export interface ConnectionOptions {
   port: number;
@@ -84,12 +92,14 @@ export class Connection {
 
   private async fetchState(): Promise<ConnectionState> {
     try {
-      const [health, stats, loadResults] = await Promise.all([
+      const [health, stats, loadResults, recordings] = await Promise.all([
         this.client.health(),
         this.client.stats(),
         this.client.loadResults(),
+        this.client.recordings(),
       ]);
-      return { kind: 'connected', url: this.client.baseUrl, version: health.version, stats, loadResults };
+      const recorded = recordings.map((r) => `${r.method} ${r.route}`);
+      return { kind: 'connected', url: this.client.baseUrl, version: health.version, stats, loadResults, recorded };
     } catch (error) {
       if (!(error instanceof ChannelUnreachable)) {
         throw error;

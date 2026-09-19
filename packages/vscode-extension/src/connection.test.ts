@@ -26,8 +26,28 @@ describe('Connection', () => {
         expect(state.version).toMatch(/^\d+\.\d+\.\d+/);
         expect(state.stats).toEqual(profiler.stats());
         expect(state.loadResults).toEqual([]);
+        expect(state.recorded).toEqual([]);
         expect(state.url).toBe(`http://127.0.0.1:${port}`);
       }
+    } finally {
+      await profiler.close();
+    }
+  });
+
+  it('lists which routes have a recording, without the recording itself', async () => {
+    const { profiler, port } = await liveProfiler();
+    const connection = new Connection({ port });
+    try {
+      profiler.start()({
+        method: 'POST',
+        route: '/login',
+        statusCode: 200,
+        request: { url: '/login', origin: 'http://127.0.0.1:3000', headers: { authorization: 'Bearer secret' }, body: { password: 'hunter2' }, bodyUnavailable: false },
+      });
+      const state = await connection.refresh();
+      expect(state.kind === 'connected' && state.recorded).toEqual(['POST /login']);
+      expect(JSON.stringify(state)).not.toContain('secret');
+      expect(JSON.stringify(state)).not.toContain('hunter2');
     } finally {
       await profiler.close();
     }

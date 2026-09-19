@@ -1,5 +1,7 @@
 # api-performance-profiler
 
+### Inspired by Linus Torvalds
+
 Lightweight API performance profiling for Node.js services. It measures real
 request timings and status codes as they happen and aggregates them into
 per-route metrics (request count, average latency, error rate).

@@ -111,5 +111,13 @@ hover. `apiProfiler.install` runs `npm install @api-profiler/express` in a
 terminal; `apiProfiler.addMiddleware` (`onboarding.ts`, VS Code-free planner)
 finds the file that calls `express()`, shows the proposed require/import and
 `app.use(profiler())` as a diff, and writes only after an explicit Apply.
-`.vscode/launch.json` runs the extension in a dev host against
-`examples/express` (F5). Next: CodeLens `▶ Load test`. `nestjs` is still empty.
+CodeLens above each route line (`codelens.ts`, VS Code-free; `loadRuns.ts`
+glue): `▶ Load test` when the app is connected and the route has a recording
+(the connection now polls `/recordings` for the recorded keys), `Load test
+(send a request first)` otherwise, `(needs a single method)` for `all()`,
+progress on the running route and "another run is in progress" on the rest;
+one run at a time, `POST /load-runs` with `apiProfiler.load.connections`
+(10) and `.duration` (5s), the gate's refusal shown verbatim, result in a
+notification and in the sidebar's Load tests section. `.vscode/launch.json`
+runs the extension in a dev host against `examples/express` (F5). Next:
+Unit 7a publishes the npm packages, 7b the extension. `nestjs` is still empty.
