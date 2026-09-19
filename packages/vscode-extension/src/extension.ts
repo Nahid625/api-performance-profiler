@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ChannelClient, Thresholds } from 'api-profiler';
 import { Connection, ConnectionState } from './connection';
+import { InlineDecorations } from './decorations';
 import { RoutesPanel } from './panel';
 import { RouteIndex } from './routeIndex';
 
@@ -16,16 +17,19 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(index);
   let panel: RoutesPanel | null = null;
   let tree: vscode.TreeView<unknown> | null = null;
+  let inline: InlineDecorations | null = null;
 
   const connect = () => {
     connection?.stop();
     tree?.dispose();
+    inline?.dispose();
     connection = new Connection({ port: configuredPort(), isInstalled: profilerInstalled });
     connection.onChange((state) => render(status, state));
     render(status, connection.state);
     panel = new RoutesPanel(connection, index, thresholds);
     tree = vscode.window.createTreeView('apiProfiler.routes', { treeDataProvider: panel, showCollapseAll: false });
-    context.subscriptions.push(tree);
+    inline = new InlineDecorations(panel, index, decorationsEnabled);
+    context.subscriptions.push(tree, inline);
     connection.start();
   };
   connect();
@@ -36,6 +40,8 @@ export function activate(context: vscode.ExtensionContext): void {
         connect();
       } else if (event.affectsConfiguration('apiProfiler.thresholds')) {
         panel?.forget();
+      } else if (event.affectsConfiguration('apiProfiler.decorations')) {
+        inline?.refresh();
       }
     }),
     vscode.window.onDidChangeWindowState((window) => {
@@ -51,6 +57,11 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand('apiProfiler.showStatus', () => showStatus(connection?.state)),
     vscode.commands.registerCommand('apiProfiler.clearMetrics', () => clearMetrics(panel)),
+    vscode.commands.registerCommand('apiProfiler.toggleDecorations', () =>
+      vscode.workspace
+        .getConfiguration('apiProfiler')
+        .update('decorations', !decorationsEnabled(), vscode.ConfigurationTarget.Global),
+    ),
     { dispose: () => connection?.stop() },
   );
 }
@@ -62,6 +73,10 @@ export function deactivate(): void {
 
 function configuredPort(): number {
   return vscode.workspace.getConfiguration('apiProfiler').get<number>('port', 4780);
+}
+
+function decorationsEnabled(): boolean {
+  return vscode.workspace.getConfiguration('apiProfiler').get<boolean>('decorations', true);
 }
 
 function thresholds(): Thresholds {

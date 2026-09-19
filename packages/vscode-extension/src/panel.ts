@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { newLiveState, Thresholds } from 'api-profiler';
 import type { Connection } from './connection';
 import type { RouteIndex } from './routeIndex';
-import { buildPanel, Row, Section } from './rows';
+import { buildPanel, Panel, Row, Section } from './rows';
 
 type Node = { kind: 'section'; section: Section } | { kind: 'row'; row: Row } | { kind: 'message'; text: string; detail?: string };
 
@@ -62,6 +62,10 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
     }
   }
 
+  snapshot(now = Date.now()): Panel {
+    return buildPanel(this.connection.state, this.live, this.thresholds(), now);
+  }
+
   getChildren(node?: Node): Node[] {
     if (node?.kind === 'section') {
       return node.section.rows.map((row) => ({ kind: 'row', row }));
@@ -69,7 +73,7 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
     if (node) {
       return [];
     }
-    const panel = buildPanel(this.connection.state, this.live, this.thresholds(), Date.now());
+    const panel = this.snapshot();
     if (panel.kind === 'message') {
       return [{ kind: 'message', text: panel.text, detail: panel.detail }];
     }

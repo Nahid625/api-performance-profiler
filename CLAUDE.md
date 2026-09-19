@@ -99,5 +99,11 @@ Status. `discover.ts` (VS Code-free, TypeScript compiler API) maps routes to
 `app.use('/prefix', router)` traced across files via import/require, else
 `prefixKnown: false` and matched by path tail; NestJS `@Controller` + `@Get`
 plus `setGlobalPrefix`. `RouteIndex` rescans on save (debounced); sidebar rows
-open the defining line and say where the route lives. Next: inline
-decorations beside the route line. `nestjs` is still empty.
+open the defining line and say where the route lives. `InlineDecorations`
+paints `🟢 84.0ms · live` (dimmed `· 40s ago` once quiet, `· load · 2 min ago`
+for runs, `⚪ no figures` when a run had none) after the route line in every
+visible editor, with the full tooltip on hover; observed traffic owns the
+line and a load run joins its hover. Setting `apiProfiler.decorations` and
+command Toggle Inline Latency. `.vscode/launch.json` runs the extension in a
+dev host against `examples/express` (F5). Next: onboarding when the profiler
+is not installed. `nestjs` is still empty.
