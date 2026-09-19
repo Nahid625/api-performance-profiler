@@ -44,9 +44,13 @@ describe('buildPanel', () => {
     expect(buildPanel({ kind: 'setup-needed' }, newLiveState(), T, 0)).toMatchObject({
       kind: 'message',
       text: 'Profiler not installed in this workspace',
+      setup: true,
+      actions: [{ command: 'apiProfiler.install' }, { command: 'apiProfiler.addMiddleware' }],
     });
     const p = buildPanel({ kind: 'unreachable', url: 'http://127.0.0.1:4780' }, newLiveState(), T, 0);
     expect(p).toMatchObject({ kind: 'message', text: 'App not running' });
+    expect(p).not.toHaveProperty('setup');
+    expect(p).not.toHaveProperty('actions');
     expect(p.kind === 'message' && p.detail).toContain('127.0.0.1:4780');
   });
 

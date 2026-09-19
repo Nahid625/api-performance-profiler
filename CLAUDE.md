@@ -104,6 +104,12 @@ paints `🟢 84.0ms · live` (dimmed `· 40s ago` once quiet, `· load · 2 min 
 for runs, `⚪ no figures` when a run had none) after the route line in every
 visible editor, with the full tooltip on hover; observed traffic owns the
 line and a load run joins its hover. Setting `apiProfiler.decorations` and
-command Toggle Inline Latency. `.vscode/launch.json` runs the extension in a
-dev host against `examples/express` (F5). Next: onboarding when the profiler
-is not installed. `nestjs` is still empty.
+command Toggle Inline Latency. Onboarding when the profiler is not installed:
+the sidebar message carries two actions, the status bar warns, and every
+route line shows `⚠ profiler not installed` with the same two actions in its
+hover. `apiProfiler.install` runs `npm install @api-profiler/express` in a
+terminal; `apiProfiler.addMiddleware` (`onboarding.ts`, VS Code-free planner)
+finds the file that calls `express()`, shows the proposed require/import and
+`app.use(profiler())` as a diff, and writes only after an explicit Apply.
+`.vscode/launch.json` runs the extension in a dev host against
+`examples/express` (F5). Next: CodeLens `▶ Load test`. `nestjs` is still empty.
