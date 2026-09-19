@@ -4,6 +4,7 @@ import { Connection, ConnectionState } from './connection';
 import { InlineDecorations } from './decorations';
 import { RoutesPanel } from './panel';
 import { RouteIndex } from './routeIndex';
+import { addMiddleware, install, Previews } from './setup';
 
 let connection: Connection | null = null;
 
@@ -14,7 +15,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(status);
 
   const index = new RouteIndex();
-  context.subscriptions.push(index);
+  const previews = new Previews();
+  context.subscriptions.push(index, previews);
   let panel: RoutesPanel | null = null;
   let tree: vscode.TreeView<unknown> | null = null;
   let inline: InlineDecorations | null = null;
@@ -57,6 +59,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand('apiProfiler.showStatus', () => showStatus(connection?.state)),
     vscode.commands.registerCommand('apiProfiler.clearMetrics', () => clearMetrics(panel)),
+    vscode.commands.registerCommand('apiProfiler.install', install),
+    vscode.commands.registerCommand('apiProfiler.addMiddleware', () => addMiddleware(previews)),
     vscode.commands.registerCommand('apiProfiler.toggleDecorations', () =>
       vscode.workspace
         .getConfiguration('apiProfiler')

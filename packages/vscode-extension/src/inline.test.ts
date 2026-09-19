@@ -1,5 +1,5 @@
 import type { RouteLocation } from './discover';
-import { buildInline } from './inline';
+import { buildInline, buildSetupInline } from './inline';
 import type { Panel, Row } from './rows';
 
 function row(overrides: Partial<Row>): Row {
@@ -68,5 +68,19 @@ describe('buildInline', () => {
   it('normalises Windows paths so editors match', () => {
     const items = buildInline(panel([row({})]), () => at('C:\\w\\app.js', 2));
     expect([...items.keys()]).toEqual(['C:/w/app.js']);
+  });
+});
+
+describe('buildSetupInline', () => {
+  it('marks every route line once with the setup actions in the hover', () => {
+    const items = buildSetupInline([at('/w/app.js', 3), at('/w/app.js', 3), { ...at('/w/app.js', 9), method: 'POST' }, at('C:\\w\\r.js', 1)]);
+    expect([...items.keys()]).toEqual(['/w/app.js', 'C:/w/r.js']);
+    expect(items.get('/w/app.js')?.map((i) => i.line)).toEqual([3, 9]);
+    const [item] = items.get('/w/app.js') ?? [];
+    expect(item.text).toBe('⚠ profiler not installed');
+    expect(item.text).not.toMatch(/\d/);
+    expect(item.hover).toContain('command:apiProfiler.install');
+    expect(item.hover).toContain('command:apiProfiler.addMiddleware');
+    expect(item.stale).toBe(true);
   });
 });

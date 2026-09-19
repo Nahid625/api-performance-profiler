@@ -81,6 +81,14 @@
       {
         "command": "apiProfiler.toggleDecorations",
         "title": "API Profiler: Toggle Inline Latency"
+      },
+      {
+        "command": "apiProfiler.install",
+        "title": "API Profiler: Install @api-profiler/express"
+      },
+      {
+        "command": "apiProfiler.addMiddleware",
+        "title": "API Profiler: Add app.use(profiler()) to your app"
       }
     ],
     "menus": {

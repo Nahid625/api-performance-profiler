@@ -21,9 +21,19 @@ export interface Section {
   rows: Row[];
 }
 
+export interface Action {
+  label: string;
+  command: string;
+}
+
 export type Panel =
-  | { kind: 'message'; text: string; detail?: string }
+  | { kind: 'message'; text: string; detail?: string; setup?: true; actions?: Action[] }
   | { kind: 'sections'; sections: Section[] };
+
+export const SETUP_ACTIONS: Action[] = [
+  { label: 'Install @api-profiler/express', command: 'apiProfiler.install' },
+  { label: 'Add app.use(profiler()) to your app', command: 'apiProfiler.addMiddleware' },
+];
 
 export function buildPanel(
   state: ConnectionState,
@@ -37,6 +47,8 @@ export function buildPanel(
         kind: 'message',
         text: 'Profiler not installed in this workspace',
         detail: 'npm install @api-profiler/express, then app.use(profiler())',
+        setup: true,
+        actions: SETUP_ACTIONS,
       };
     case 'unreachable':
       return {

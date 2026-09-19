@@ -2,9 +2,13 @@ import * as vscode from 'vscode';
 import { newLiveState, Thresholds } from 'api-profiler';
 import type { Connection } from './connection';
 import type { RouteIndex } from './routeIndex';
-import { buildPanel, Panel, Row, Section } from './rows';
+import { Action, buildPanel, Panel, Row, Section } from './rows';
 
-type Node = { kind: 'section'; section: Section } | { kind: 'row'; row: Row } | { kind: 'message'; text: string; detail?: string };
+type Node =
+  | { kind: 'section'; section: Section }
+  | { kind: 'row'; row: Row }
+  | { kind: 'message'; text: string; detail?: string }
+  | { kind: 'action'; action: Action };
 
 export class RoutesPanel implements vscode.TreeDataProvider<Node> {
   private readonly changed = new vscode.EventEmitter<Node | undefined>();
@@ -59,6 +63,12 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
         item.iconPath = new vscode.ThemeIcon('info');
         return item;
       }
+      case 'action': {
+        const item = new vscode.TreeItem(node.action.label);
+        item.iconPath = new vscode.ThemeIcon('arrow-right');
+        item.command = { command: node.action.command, title: node.action.label };
+        return item;
+      }
     }
   }
 
@@ -75,7 +85,8 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
     }
     const panel = this.snapshot();
     if (panel.kind === 'message') {
-      return [{ kind: 'message', text: panel.text, detail: panel.detail }];
+      const actions: Node[] = (panel.actions ?? []).map((action) => ({ kind: 'action', action }));
+      return [{ kind: 'message', text: panel.text, detail: panel.detail }, ...actions];
     }
     return panel.sections.map((section) => ({ kind: 'section', section }));
   }

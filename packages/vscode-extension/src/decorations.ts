@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { buildInline, InlineItem, normalize } from './inline';
+import { buildInline, buildSetupInline, InlineItem, normalize } from './inline';
 import type { RoutesPanel } from './panel';
 import type { RouteIndex } from './routeIndex';
 
@@ -29,12 +29,20 @@ export class InlineDecorations implements vscode.Disposable {
   }
 
   refresh(): void {
-    const items = this.enabled() ? buildInline(this.panel.snapshot(), (m, r) => this.index.find(m, r)) : new Map();
+    const items = this.enabled() ? this.items() : new Map<string, InlineItem[]>();
     for (const editor of vscode.window.visibleTextEditors) {
       const forFile = items.get(normalize(editor.document.uri.fsPath)) ?? [];
       editor.setDecorations(this.live, this.options(editor, forFile.filter((i: InlineItem) => !i.stale)));
       editor.setDecorations(this.stale, this.options(editor, forFile.filter((i: InlineItem) => i.stale)));
     }
+  }
+
+  private items(): Map<string, InlineItem[]> {
+    const panel = this.panel.snapshot();
+    if (panel.kind === 'message') {
+      return panel.setup ? buildSetupInline(this.index.all()) : new Map();
+    }
+    return buildInline(panel, (m, r) => this.index.find(m, r));
   }
 
   dispose(): void {
@@ -53,6 +61,7 @@ export class InlineDecorations implements vscode.Disposable {
         continue;
       }
       const hover = new vscode.MarkdownString(item.hover);
+      hover.isTrusted = { enabledCommands: ['apiProfiler.install', 'apiProfiler.addMiddleware'] };
       out.push({
         range: editor.document.lineAt(item.line - 1).range,
         renderOptions: { after: { contentText: item.text } },
