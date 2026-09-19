@@ -21,7 +21,7 @@ function stat(overrides: Partial<RouteStats> = {}): RouteStats {
 }
 
 function connected(stats: RouteStats[], loadResults: LoadResult[] = []) {
-  return { kind: 'connected' as const, url: 'http://127.0.0.1:4780', version: '0.0.0', stats, loadResults };
+  return { kind: 'connected' as const, url: 'http://127.0.0.1:4780', version: '0.0.0', stats, loadResults, recorded: [] };
 }
 
 function run(overrides: Partial<LoadResult> = {}): LoadResult {

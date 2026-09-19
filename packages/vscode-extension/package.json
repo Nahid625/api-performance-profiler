@@ -30,6 +30,20 @@
           "default": true,
           "description": "Show each route's latency at the end of the line where it is declared."
         },
+        "apiProfiler.load.connections": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Concurrent connections a load test opens against your app."
+        },
+        "apiProfiler.load.duration": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Seconds a load test runs."
+        },
         "apiProfiler.thresholds.fast": {
           "type": "number",
           "default": 200,
@@ -81,6 +95,14 @@
       {
         "command": "apiProfiler.toggleDecorations",
         "title": "API Profiler: Toggle Inline Latency"
+      },
+      {
+        "command": "apiProfiler.loadTest",
+        "title": "API Profiler: Load Test Route"
+      },
+      {
+        "command": "apiProfiler.explainLoadTest",
+        "title": "API Profiler: Why Can't I Load Test This Route?"
       },
       {
         "command": "apiProfiler.install",
