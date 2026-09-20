@@ -13,7 +13,7 @@ describe('buildLenses', () => {
 
   it('offers nothing unless the app is connected', () => {
     expect(buildLenses(locations, { kind: 'unreachable', url: 'x' }, null)).toEqual([]);
-    expect(buildLenses(locations, { kind: 'setup-needed' }, null)).toEqual([]);
+    expect(buildLenses(locations, { kind: 'setup-needed', missing: 'package' }, null)).toEqual([]);
   });
 
   it('offers a run only for routes with a recording, and explains the rest', () => {

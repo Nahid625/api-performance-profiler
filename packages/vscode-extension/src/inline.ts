@@ -41,9 +41,13 @@ export function buildInline(panel: Panel, find: Find): Map<string, InlineItem[]>
 }
 
 // Before setup, every route line points at the two setup actions instead of a figure.
-export function buildSetupInline(locations: RouteLocation[]): Map<string, InlineItem[]> {
+export function buildSetupInline(locations: RouteLocation[], missing: 'package' | 'middleware'): Map<string, InlineItem[]> {
   const byFile = new Map<string, InlineItem[]>();
-  const hover = 'API Profiler is not installed in this workspace.\n\n[Install @api-profiler/express](command:apiProfiler.install) · [Add app.use(profiler())](command:apiProfiler.addMiddleware)';
+  const text = missing === 'package' ? '⚠ profiler not installed' : '⚠ add app.use(profiler())';
+  const hover =
+    missing === 'package'
+      ? 'API Profiler is not installed in this workspace.\n\n[Install @api-profiler/express](command:apiProfiler.install) · [Add app.use(profiler())](command:apiProfiler.addMiddleware)'
+      : '@api-profiler/express is installed, but no file calls app.use(profiler()) yet.\n\n[Add app.use(profiler())](command:apiProfiler.addMiddleware)';
   const seen = new Set<string>();
   for (const location of locations) {
     const file = normalize(location.file);
@@ -53,7 +57,7 @@ export function buildSetupInline(locations: RouteLocation[]): Map<string, Inline
     }
     seen.add(key);
     const items = byFile.get(file) ?? [];
-    items.push({ line: location.line, text: '⚠ profiler not installed', hover, stale: true });
+    items.push({ line: location.line, text, hover, stale: true });
     byFile.set(file, items);
   }
   return byFile;

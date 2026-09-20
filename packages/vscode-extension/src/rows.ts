@@ -30,10 +30,12 @@ export type Panel =
   | { kind: 'message'; text: string; detail?: string; setup?: true; actions?: Action[] }
   | { kind: 'sections'; sections: Section[] };
 
-export const SETUP_ACTIONS: Action[] = [
-  { label: 'Install @api-profiler/express', command: 'apiProfiler.install' },
-  { label: 'Add app.use(profiler()) to your app', command: 'apiProfiler.addMiddleware' },
-];
+const INSTALL: Action = { label: 'Install @api-profiler/express', command: 'apiProfiler.install' };
+const ADD: Action = { label: 'Add app.use(profiler()) to your app', command: 'apiProfiler.addMiddleware' };
+
+export function setupActions(missing: 'package' | 'middleware'): Action[] {
+  return missing === 'package' ? [INSTALL, ADD] : [ADD];
+}
 
 export function buildPanel(
   state: ConnectionState,
@@ -43,13 +45,21 @@ export function buildPanel(
 ): Panel {
   switch (state.kind) {
     case 'setup-needed':
-      return {
-        kind: 'message',
-        text: 'Profiler not installed in this workspace',
-        detail: 'npm install @api-profiler/express, then app.use(profiler())',
-        setup: true,
-        actions: SETUP_ACTIONS,
-      };
+      return state.missing === 'package'
+        ? {
+            kind: 'message',
+            text: 'Profiler not installed in this workspace',
+            detail: 'npm install @api-profiler/express, then app.use(profiler())',
+            setup: true,
+            actions: setupActions('package'),
+          }
+        : {
+            kind: 'message',
+            text: 'One line left: app.use(profiler())',
+            detail: '@api-profiler/express is installed; add app.use(profiler()) before your routes, then start the app.',
+            setup: true,
+            actions: setupActions('middleware'),
+          };
     case 'unreachable':
       return {
         kind: 'message',

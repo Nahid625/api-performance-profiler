@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { discoverRoutes, matchRoute, RouteLocation, SourceFileInput } from './discover';
+import { discoverRoutes, matchRoute, RouteLocation, SourceFileInput, usesProfiler } from './discover';
 
 const SOURCES = '**/*.{js,ts,mjs,cjs}';
 const IGNORED = '{**/node_modules/**,**/dist/**,**/build/**,**/out/**,**/.git/**,**/*.d.ts,**/*.test.*,**/*.spec.*}';
@@ -11,6 +11,7 @@ export class RouteIndex implements vscode.Disposable {
   private readonly changed = new vscode.EventEmitter<void>();
   readonly onDidChange = this.changed.event;
   private locations: RouteLocation[] = [];
+  private wired = false;
   private timer: NodeJS.Timeout | null = null;
   private scanning: Promise<void> | null = null;
   private dirty = false;
@@ -34,6 +35,11 @@ export class RouteIndex implements vscode.Disposable {
 
   all(): RouteLocation[] {
     return this.locations;
+  }
+
+  // Whether some file in the workspace calls app.use(profiler()).
+  middlewareWired(): boolean {
+    return this.wired;
   }
 
   find(method: string, route: string): RouteLocation | undefined {
@@ -94,6 +100,7 @@ export class RouteIndex implements vscode.Disposable {
       }
     }
     this.locations = discoverRoutes(files);
+    this.wired = files.some((f) => usesProfiler(f.text));
     this.changed.fire();
   }
 }

@@ -34,6 +34,27 @@ describe('planInsertion', () => {
     });
   });
 
+  it('recognises a NestJS bootstrap and keeps the import after the last import', () => {
+    const text = [
+      "import { NestFactory } from '@nestjs/core';",
+      "import { AppModule } from './app.module';",
+      '',
+      'async function bootstrap() {',
+      '  const app = await NestFactory.create<NestExpressApplication>(AppModule, {',
+      '    rawBody: true,',
+      '  });',
+      "  app.setGlobalPrefix('api');",
+      '  await app.listen(3000);',
+      '}',
+    ].join('\n');
+    expect(planInsertion('main.ts', text)).toEqual({
+      importAt: 2,
+      importLine: "import { profiler } from '@api-profiler/express';",
+      useAt: 7,
+      useLine: '  app.use(profiler());',
+    });
+  });
+
   it('handles a destructured or property require', () => {
     const text = ["const { json } = require('express');", "const express = require('express').default;", 'const app = express();'].join('\n');
     expect(planInsertion('app.js', text)).toMatchObject({ importAt: 2, useAt: 3 });

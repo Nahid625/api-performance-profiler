@@ -1,4 +1,4 @@
-import { discoverRoutes, matchRoute, RouteLocation } from './discover';
+import { discoverRoutes, matchRoute, RouteLocation, usesProfiler } from './discover';
 
 function found(locations: RouteLocation[]): string[] {
   return locations
@@ -193,5 +193,15 @@ describe('matchRoute', () => {
   it('lets ALL match any method and respects the method otherwise', () => {
     expect(matchRoute(locations, 'POST', '/health')?.file).toBe('c.js');
     expect(matchRoute(locations, 'POST', '/api/orders/:id')).toBeUndefined();
+  });
+});
+
+describe('usesProfiler', () => {
+  it('needs both the import and the app.use call', () => {
+    expect(usesProfiler("const { profiler } = require('@api-profiler/express');\napp.use(profiler());")).toBe(true);
+    expect(usesProfiler("import { profiler } from '@api-profiler/express';\napp.use( profiler({ channel: false }) );")).toBe(true);
+    expect(usesProfiler("const { profiler } = require('@api-profiler/express');")).toBe(false);
+    expect(usesProfiler('app.use(profiler());')).toBe(false);
+    expect(usesProfiler("// mentions @api-profiler/express and profiler( in a comment")).toBe(false);
   });
 });

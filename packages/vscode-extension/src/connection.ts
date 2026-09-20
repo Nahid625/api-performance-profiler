@@ -3,7 +3,7 @@ import type { LoadResult } from '@api-profiler/node';
 import { ChannelClient, ChannelUnreachable, channelUrl } from 'api-profiler';
 
 export type ConnectionState =
-  | { kind: 'setup-needed' }
+  | { kind: 'setup-needed'; missing: Missing }
   | { kind: 'unreachable'; url: string }
   | {
       kind: 'connected';
@@ -15,12 +15,15 @@ export type ConnectionState =
       recorded: string[];
     };
 
+// What still has to happen before the app can report: the package, or the app.use line.
+export type Missing = 'package' | 'middleware';
+
 export interface ConnectionOptions {
   port: number;
   connectedIntervalMs?: number;
   unreachableIntervalMs?: number;
-  // Whether the workspace has the profiler installed; decides setup-needed vs unreachable.
-  isInstalled?: () => Promise<boolean>;
+  // What the workspace is missing, or null when it is set up; decides setup-needed vs unreachable.
+  setup?: () => Promise<Missing | null>;
 }
 
 export type Listener = (state: ConnectionState) => void;
@@ -29,7 +32,7 @@ export class Connection {
   private readonly client: ChannelClient;
   private readonly connectedInterval: number;
   private readonly unreachableInterval: number;
-  private readonly isInstalled: () => Promise<boolean>;
+  private readonly setup: () => Promise<Missing | null>;
   private readonly listeners = new Set<Listener>();
   private timer: NodeJS.Timeout | null = null;
   private running = false;
@@ -40,7 +43,7 @@ export class Connection {
     this.client = new ChannelClient(channelUrl(options.port));
     this.connectedInterval = options.connectedIntervalMs ?? 1000;
     this.unreachableInterval = options.unreachableIntervalMs ?? 5000;
-    this.isInstalled = options.isInstalled ?? (() => Promise.resolve(true));
+    this.setup = options.setup ?? (() => Promise.resolve(null));
     this.current = { kind: 'unreachable', url: this.client.baseUrl };
   }
 
@@ -104,9 +107,8 @@ export class Connection {
       if (!(error instanceof ChannelUnreachable)) {
         throw error;
       }
-      return (await this.isInstalled())
-        ? { kind: 'unreachable', url: this.client.baseUrl }
-        : { kind: 'setup-needed' };
+      const missing = await this.setup();
+      return missing ? { kind: 'setup-needed', missing } : { kind: 'unreachable', url: this.client.baseUrl };
     }
   }
 
