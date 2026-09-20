@@ -1,3 +1,5 @@
+<p align="center"><img src="media/logo.svg" width="128" alt="API Performance Profiler"></p>
+
 # api-performance-profiler
 
 ### Inspired by Linus Torvalds
