@@ -1,8 +1,26 @@
 {
   "name": "api-profiler",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Terminal client for api-performance-profiler: route table, recordings and load runs without VS Code.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nahid625/api-performance-profiler.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Nahid625/api-performance-profiler#readme",
+  "bugs": "https://github.com/Nahid625/api-performance-profiler/issues",
+  "keywords": [
+    "api",
+    "performance",
+    "profiler",
+    "cli",
+    "latency",
+    "load-test"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "api-profiler": "dist/bin.js"
   },
@@ -18,8 +36,8 @@
     "build": "tsc && node -e \"require('fs').chmodSync('dist/bin.js', 0o755)\""
   },
   "devDependencies": {
-    "@api-profiler/core": "^0.0.0",
-    "@api-profiler/node": "^0.0.0",
+    "@api-profiler/core": "^0.1.0",
+    "@api-profiler/node": "^0.1.0",
     "@types/node": "^20.0.0",
     "typescript": "^5.5.0"
   }

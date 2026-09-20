@@ -6,12 +6,21 @@ Lightweight API performance profiling for Node.js services. It measures real
 request timings and status codes as they happen and aggregates them into
 per-route metrics (request count, average latency, error rate).
 
-This is an npm workspaces monorepo. Packages are published under the
-`@api-profiler` scope:
+**The core idea: hit the route once, we replay it a thousand times.** The
+middleware sees the real request — the working token, the path param that
+exists, the body the route accepts — records it in memory, and can replay it
+under load. The results show up in the terminal or next to the route in
+VS Code.
 
-- `@api-profiler/core` — framework-agnostic metrics types, aggregation engine, and storage.
-- `@api-profiler/express` — Express middleware built on `@api-profiler/core`.
-- `@api-profiler/node`, `@api-profiler/nestjs`, `@api-profiler/vscode-extension` — planned.
+This is an npm workspaces monorepo:
+
+| Package | What it is |
+|---|---|
+| `@api-profiler/express` | The middleware. This is what you install. |
+| `api-profiler` | Terminal client: live table, `run GET /users/:id`. |
+| **API Performance Profiler** (VS Code) | `🟢 84ms` at the end of each route line, `▶ Load test` above it. |
+| `@api-profiler/core`, `@api-profiler/node` | Internal: types, store, recorder, load runner, local channel. |
+| `@api-profiler/nestjs` | Planned. |
 
 ## Install
 
@@ -71,7 +80,7 @@ npx api-profiler --port 4790 …          # if you changed the channel port
 ```
 
 ```
-api-profiler · app http://127.0.0.1:4780 · v0.0.0 · 14:32:10
+api-profiler · app http://127.0.0.1:4780 · v0.1.0 · 14:32:10
 
 Observed traffic
     route            count  avg      max      errors  req/s  when
@@ -129,4 +138,6 @@ real users' requests in memory.
 
 ## License
 
-MIT
+AGPL-3.0-only. Free to use, modify and self-host; if you offer a modified
+version as a network service, you must publish its source under the same
+license. Copyright (c) 2026 Nahid.

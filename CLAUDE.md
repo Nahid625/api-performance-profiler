@@ -119,5 +119,11 @@ progress on the running route and "another run is in progress" on the rest;
 one run at a time, `POST /load-runs` with `apiProfiler.load.connections`
 (10) and `.duration` (5s), the gate's refusal shown verbatim, result in a
 notification and in the sidebar's Load tests section. `.vscode/launch.json`
-runs the extension in a dev host against `examples/express` (F5). Next:
-Unit 7a publishes the npm packages, 7b the extension. `nestjs` is still empty.
+runs the extension in a dev host against `examples/express` (F5).
+
+Release prep (Phase 5 Unit 7a): `core`, `node`, `express` and `cli` are at
+v0.1.0 with `repository`, `keywords`, `engines` (node ≥18), `publishConfig`
+public, their own README and LICENSE; `npm pack --dry-run` ships only
+`dist`, README, LICENSE and package.json. Nahid publishes by hand
+(`npm publish --workspaces`). Next: Unit 7b packages and publishes the
+extension. `nestjs` is still empty.

@@ -9,7 +9,7 @@
     "load": "node load.js"
   },
   "dependencies": {
-    "@api-profiler/express": "^0.0.0",
+    "@api-profiler/express": "^0.1.0",
     "express": "^5.2.1"
   }
 }

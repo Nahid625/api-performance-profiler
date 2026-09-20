@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "private": true,
   "publisher": "nahid625",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -132,12 +132,12 @@
     "build": "tsc --noEmit && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --minify --outfile=dist/extension.js --log-level=warning"
   },
   "dependencies": {
-    "api-profiler": "^0.0.0",
+    "api-profiler": "^0.1.0",
     "typescript": "^5.5.0"
   },
   "devDependencies": {
-    "@api-profiler/core": "^0.0.0",
-    "@api-profiler/node": "^0.0.0",
+    "@api-profiler/core": "^0.1.0",
+    "@api-profiler/node": "^0.1.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.100.0",
     "esbuild": "^0.25.0"

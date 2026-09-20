@@ -2,7 +2,7 @@
   "name": "api-performance-profiler",
   "private": true,
   "version": "0.0.0",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "workspaces": [
     "packages/core",
     "packages/node",
