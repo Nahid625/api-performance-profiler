@@ -41,11 +41,17 @@ function run(overrides: Partial<LoadResult> = {}): LoadResult {
 
 describe('buildPanel', () => {
   it('explains setup-needed and unreachable', () => {
-    expect(buildPanel({ kind: 'setup-needed' }, newLiveState(), T, 0)).toMatchObject({
+    expect(buildPanel({ kind: 'setup-needed', missing: 'package' }, newLiveState(), T, 0)).toMatchObject({
       kind: 'message',
       text: 'Profiler not installed in this workspace',
       setup: true,
       actions: [{ command: 'apiProfiler.install' }, { command: 'apiProfiler.addMiddleware' }],
+    });
+    expect(buildPanel({ kind: 'setup-needed', missing: 'middleware' }, newLiveState(), T, 0)).toMatchObject({
+      kind: 'message',
+      text: 'One line left: app.use(profiler())',
+      setup: true,
+      actions: [{ command: 'apiProfiler.addMiddleware' }],
     });
     const p = buildPanel({ kind: 'unreachable', url: 'http://127.0.0.1:4780' }, newLiveState(), T, 0);
     expect(p).toMatchObject({ kind: 'message', text: 'App not running' });

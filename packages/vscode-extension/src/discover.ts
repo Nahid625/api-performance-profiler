@@ -77,6 +77,11 @@ export function discoverRoutes(files: SourceFileInput[]): RouteLocation[] {
   return dedupe(out);
 }
 
+// True when a file imports @api-profiler/express and passes profiler() to app.use.
+export function usesProfiler(text: string): boolean {
+  return text.includes('@api-profiler/express') && /\.use\(\s*profiler\(/.test(text);
+}
+
 export function matchRoute(
   locations: RouteLocation[],
   method: string,

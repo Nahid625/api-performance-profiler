@@ -124,6 +124,19 @@ runs the extension in a dev host against `examples/express` (F5).
 Release prep (Phase 5 Unit 7a): `core`, `node`, `express` and `cli` are at
 v0.1.0 with `repository`, `keywords`, `engines` (node ≥18), `publishConfig`
 public, their own README and LICENSE; `npm pack --dry-run` ships only
-`dist`, README, LICENSE and package.json. Nahid publishes by hand
-(`npm publish --workspaces`). Next: Unit 7b packages and publishes the
-extension. `nestjs` is still empty.
+`dist`, README, LICENSE and package.json. All four are on npm as v0.1.0
+(scope `@api-profiler`, org owned by Nahid). License is AGPL-3.0-only.
+
+Extension release (Unit 7b): `packages/vscode-extension` is v0.1.0 with
+`icon` (`media/icon.png` from `media/logo.svg`), `repository`, `keywords`,
+`galleryBanner`, `extensionKind: workspace`, its own README, CHANGELOG and
+LICENSE; `.vscodeignore` ships only the bundle, icon, docs and manifest;
+`npm run package -w api-profiler-vscode` (vsce, `--no-dependencies` because
+esbuild bundles everything) produces the `.vsix` (~1 MB). Onboarding is two
+steps: `setup-needed` carries `missing: 'package' | 'middleware'`
+(`checkSetup`: package.json scan, then `RouteIndex.middlewareWired()` via
+`usesProfiler`), and the sidebar, status bar, inline hints and a one-time
+popup per step (workspaceState) offer only what is still missing. Nahid
+installs the `.vsix` by hand, creates publisher `nahid625` and runs
+`vsce publish`. Next: Phase 6
+(NestJS adapter); `nestjs` is still empty.

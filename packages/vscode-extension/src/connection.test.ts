@@ -54,13 +54,15 @@ describe('Connection', () => {
   });
 
   it('reports unreachable when the app is not running but the profiler is installed', async () => {
-    const connection = new Connection({ port: 1, isInstalled: () => Promise.resolve(true) });
+    const connection = new Connection({ port: 1, setup: () => Promise.resolve(null) });
     expect(await connection.refresh()).toEqual({ kind: 'unreachable', url: 'http://127.0.0.1:1' });
   });
 
-  it('reports setup-needed when the profiler is not installed', async () => {
-    const connection = new Connection({ port: 1, isInstalled: () => Promise.resolve(false) });
-    expect(await connection.refresh()).toEqual({ kind: 'setup-needed' });
+  it('reports setup-needed with what is missing', async () => {
+    const connection = new Connection({ port: 1, setup: () => Promise.resolve('package') });
+    expect(await connection.refresh()).toEqual({ kind: 'setup-needed', missing: 'package' });
+    const later = new Connection({ port: 1, setup: () => Promise.resolve('middleware') });
+    expect(await later.refresh()).toEqual({ kind: 'setup-needed', missing: 'middleware' });
   });
 
   it('assumes installed when not told otherwise', async () => {

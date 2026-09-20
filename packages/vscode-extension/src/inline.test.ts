@@ -73,7 +73,7 @@ describe('buildInline', () => {
 
 describe('buildSetupInline', () => {
   it('marks every route line once with the setup actions in the hover', () => {
-    const items = buildSetupInline([at('/w/app.js', 3), at('/w/app.js', 3), { ...at('/w/app.js', 9), method: 'POST' }, at('C:\\w\\r.js', 1)]);
+    const items = buildSetupInline([at('/w/app.js', 3), at('/w/app.js', 3), { ...at('/w/app.js', 9), method: 'POST' }, at('C:\\w\\r.js', 1)], 'package');
     expect([...items.keys()]).toEqual(['/w/app.js', 'C:/w/r.js']);
     expect(items.get('/w/app.js')?.map((i) => i.line)).toEqual([3, 9]);
     const [item] = items.get('/w/app.js') ?? [];
@@ -82,5 +82,12 @@ describe('buildSetupInline', () => {
     expect(item.hover).toContain('command:apiProfiler.install');
     expect(item.hover).toContain('command:apiProfiler.addMiddleware');
     expect(item.stale).toBe(true);
+  });
+
+  it('asks only for the app.use line once the package is installed', () => {
+    const [item] = buildSetupInline([at('/w/app.js', 3)], 'middleware').get('/w/app.js') ?? [];
+    expect(item.text).toBe('⚠ add app.use(profiler())');
+    expect(item.hover).toContain('command:apiProfiler.addMiddleware');
+    expect(item.hover).not.toContain('command:apiProfiler.install');
   });
 });

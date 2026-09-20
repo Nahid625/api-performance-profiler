@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { buildInline, buildSetupInline, InlineItem, normalize } from './inline';
+import type { Connection } from './connection';
 import type { RoutesPanel } from './panel';
 import type { RouteIndex } from './routeIndex';
 
@@ -16,6 +17,7 @@ export class InlineDecorations implements vscode.Disposable {
   private readonly subscriptions: vscode.Disposable[] = [];
 
   constructor(
+    private readonly connection: Connection,
     private readonly panel: RoutesPanel,
     private readonly index: RouteIndex,
     private readonly enabled: () => boolean,
@@ -40,7 +42,8 @@ export class InlineDecorations implements vscode.Disposable {
   private items(): Map<string, InlineItem[]> {
     const panel = this.panel.snapshot();
     if (panel.kind === 'message') {
-      return panel.setup ? buildSetupInline(this.index.all()) : new Map();
+      const state = this.connection.state;
+      return state.kind === 'setup-needed' ? buildSetupInline(this.index.all(), state.missing) : new Map();
     }
     return buildInline(panel, (m, r) => this.index.find(m, r));
   }

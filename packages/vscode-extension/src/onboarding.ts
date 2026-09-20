@@ -10,7 +10,7 @@ export interface Insertion {
   useLine: string;
 }
 
-// Works out where `app.use(profiler())` belongs in an Express entry file, or null when it cannot tell.
+// Works out where `app.use(profiler())` belongs in an Express or NestJS entry file, or null when it cannot tell.
 export function planInsertion(file: string, text: string): Insertion | null {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, file.endsWith('.ts') ? ts.ScriptKind.TS : ts.ScriptKind.JS);
   if (text.includes(PACKAGE)) {
@@ -26,7 +26,7 @@ export function planInsertion(file: string, text: string): Insertion | null {
       lastImport = Math.max(lastImport, endLine(source, node));
     } else if (ts.isVariableStatement(node) && node.declarationList.declarations.some((d) => d.initializer && isRequire(d.initializer))) {
       lastImport = Math.max(lastImport, endLine(source, node));
-    } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && isExpressCall(node.initializer) && !app) {
+    } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && createsApp(node.initializer) && !app) {
       const statement = node.parent.parent;
       const line = endLine(source, statement);
       app = { name: node.name.text, line, indent: indentOf(source, statement) };
@@ -62,8 +62,21 @@ function isRequire(node: ts.Expression): boolean {
   return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require';
 }
 
-function isExpressCall(node: ts.Expression): boolean {
-  return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'express' && node.arguments.length === 0;
+// `express()` or `await NestFactory.create(...)` (Nest on its default Express adapter).
+function createsApp(node: ts.Expression): boolean {
+  const call = ts.isAwaitExpression(node) ? node.expression : node;
+  if (!ts.isCallExpression(call)) {
+    return false;
+  }
+  if (ts.isIdentifier(call.expression)) {
+    return call.expression.text === 'express' && call.arguments.length === 0;
+  }
+  return (
+    ts.isPropertyAccessExpression(call.expression) &&
+    ts.isIdentifier(call.expression.expression) &&
+    call.expression.expression.text === 'NestFactory' &&
+    call.expression.name.text === 'create'
+  );
 }
 
 function endLine(source: ts.SourceFile, node: ts.Node): number {

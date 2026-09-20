@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ChannelClient, Thresholds } from 'api-profiler';
-import { Connection, ConnectionState } from './connection';
+import { Connection, ConnectionState, Missing } from './connection';
 import { InlineDecorations } from './decorations';
 import { LoadRuns, LoadSettings } from './loadRuns';
 import { RoutesPanel } from './panel';
@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const index = new RouteIndex();
   const previews = new Previews();
-  context.subscriptions.push(index, previews);
+  context.subscriptions.push(index, previews, { dispose: index.onDidChange(() => offerSetup(context, index, previews)).dispose });
   let panel: RoutesPanel | null = null;
   let tree: vscode.TreeView<unknown> | null = null;
   let inline: InlineDecorations | null = null;
@@ -28,12 +28,13 @@ export function activate(context: vscode.ExtensionContext): void {
     tree?.dispose();
     inline?.dispose();
     loads?.dispose();
-    connection = new Connection({ port: configuredPort(), isInstalled: profilerInstalled });
+    connection = new Connection({ port: configuredPort(), setup: () => checkSetup(index) });
     connection.onChange((state) => render(status, state));
+    connection.onChange(() => offerSetup(context, index, previews));
     render(status, connection.state);
     panel = new RoutesPanel(connection, index, thresholds);
     tree = vscode.window.createTreeView('apiProfiler.routes', { treeDataProvider: panel, showCollapseAll: false });
-    inline = new InlineDecorations(panel, index, decorationsEnabled);
+    inline = new InlineDecorations(connection, panel, index, decorationsEnabled);
     loads = new LoadRuns(connection, index, loadSettings);
     context.subscriptions.push(tree, inline, loads);
     connection.start();
@@ -79,6 +80,49 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   connection?.stop();
   connection = null;
+}
+
+// Asks once per workspace for each setup step, and only when there are routes to profile.
+function offerSetup(context: vscode.ExtensionContext, index: RouteIndex, previews: Previews): void {
+  const state = connection?.state;
+  const routes = index.all().length;
+  if (state?.kind !== 'setup-needed' || routes === 0) {
+    return;
+  }
+  const key = `setupOffered.${state.missing}`;
+  if (context.workspaceState.get(key)) {
+    return;
+  }
+  void context.workspaceState.update(key, true);
+  const add = 'Add app.use(profiler())';
+  const count = `${routes} route${routes === 1 ? '' : 's'}`;
+  const ask =
+    state.missing === 'package'
+      ? vscode.window.showInformationMessage(
+          `API Profiler found ${count} here, but @api-profiler/express is not installed. Install it to see each route's latency next to its code.`,
+          'Install',
+          add,
+          'Not now',
+        )
+      : vscode.window.showInformationMessage(
+          `@api-profiler/express is installed. One line left: app.use(profiler()) before your routes, then start the app and the ${count} here get their figures.`,
+          add,
+          'Not now',
+        );
+  void ask.then((choice) => {
+    if (choice === 'Install') {
+      install();
+    } else if (choice === add) {
+      void addMiddleware(previews);
+    }
+  });
+}
+
+async function checkSetup(index: RouteIndex): Promise<Missing | null> {
+  if (!(await profilerInstalled())) {
+    return 'package';
+  }
+  return index.middlewareWired() ? null : 'middleware';
 }
 
 function configuredPort(): number {
@@ -159,7 +203,10 @@ function render(status: vscode.StatusBarItem, state: ConnectionState): void {
       return;
     case 'setup-needed':
       status.text = '$(warning) API Profiler: setup needed';
-      status.tooltip = 'This workspace does not have @api-profiler/express installed.';
+      status.tooltip =
+        state.missing === 'package'
+          ? 'This workspace does not have @api-profiler/express installed.'
+          : '@api-profiler/express is installed; add app.use(profiler()) to your app.';
       status.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
       return;
   }
@@ -182,7 +229,9 @@ function showStatus(state: ConnectionState | undefined): void {
       return;
     case 'setup-needed':
       void vscode.window.showWarningMessage(
-        'API Profiler is not installed in this workspace yet. Run: npm install @api-profiler/express, then add app.use(profiler()).',
+        state.missing === 'package'
+          ? 'API Profiler is not installed in this workspace yet. Run: npm install @api-profiler/express, then add app.use(profiler()).'
+          : '@api-profiler/express is installed. Add app.use(profiler()) before your routes, then start the app.',
       );
   }
 }

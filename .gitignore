@@ -4,3 +4,4 @@ dist/
 *.log
 docs/checklist.md
 docs/PROJECT.md
+*.vsix
