@@ -1,18 +1,39 @@
 {
   "name": "@api-profiler/node",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Framework-agnostic request timing for api-performance-profiler.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nahid625/api-performance-profiler.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://github.com/Nahid625/api-performance-profiler#readme",
+  "bugs": "https://github.com/Nahid625/api-performance-profiler/issues",
+  "keywords": [
+    "api",
+    "performance",
+    "profiler",
+    "latency",
+    "load-test",
+    "node"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@api-profiler/core": "^0.0.0",
+    "@api-profiler/core": "^0.1.0",
     "autocannon": "^8.0.0"
   },
   "devDependencies": {

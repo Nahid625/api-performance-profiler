@@ -1,13 +1,33 @@
 {
   "name": "@api-profiler/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Core metrics types, aggregation engine, and storage for api-performance-profiler.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nahid625/api-performance-profiler.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Nahid625/api-performance-profiler#readme",
+  "bugs": "https://github.com/Nahid625/api-performance-profiler/issues",
+  "keywords": [
+    "api",
+    "performance",
+    "profiler",
+    "latency",
+    "metrics"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc"
   },
