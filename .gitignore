@@ -5,3 +5,5 @@ dist/
 docs/checklist.md
 docs/PROJECT.md
 *.vsix
+patch_app.js
+test_bug.js
