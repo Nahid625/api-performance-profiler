@@ -23,8 +23,10 @@ export function planInsertion(file: string, text: string): Insertion | null {
   const visit = (node: ts.Node): void => {
     if (ts.isImportDeclaration(node)) {
       esm = true;
-      lastImport = Math.max(lastImport, endLine(source, node));
-    } else if (ts.isVariableStatement(node) && node.declarationList.declarations.some((d) => d.initializer && isRequire(d.initializer))) {
+      if (!app) {
+        lastImport = Math.max(lastImport, endLine(source, node));
+      }
+    } else if (!app && ts.isVariableStatement(node) && node.declarationList.declarations.some((d) => d.initializer && isRequire(d.initializer))) {
       lastImport = Math.max(lastImport, endLine(source, node));
     } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && createsApp(node.initializer) && !app) {
       const statement = node.parent.parent;
