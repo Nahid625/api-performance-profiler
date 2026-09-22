@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MetricStoreOptions, RouteStats, UNMATCHED_ROUTE } from '@api-profiler/core';
 import {
+  CapturedRequest,
   LOAD_HEADER,
   LoadResult,
   LocalChannelOptions,
@@ -66,6 +67,12 @@ export class ProfilerInterceptor implements NestInterceptor, ProfilerInterceptor
     const method = req.method;
     const mode = req.headers?.[LOAD_HEADER.toLowerCase()] === '1' ? 'load' : 'observed';
     
+    let capturedReq: CapturedRequest | undefined;
+    if (this.isRecording) {
+      const bodySnapshot = copy(req.body);
+      capturedReq = capture(req, bodySnapshot);
+    }
+    
     return next.handle().pipe(
       tap({
         next: () => {
@@ -74,7 +81,7 @@ export class ProfilerInterceptor implements NestInterceptor, ProfilerInterceptor
             route: routePath,
             statusCode: res.statusCode || 200,
             mode,
-            request: undefined
+            request: capturedReq
           });
         },
         error: (err: unknown) => {
@@ -88,10 +95,39 @@ export class ProfilerInterceptor implements NestInterceptor, ProfilerInterceptor
             route: routePath,
             statusCode,
             mode,
-            request: undefined
+            request: capturedReq
           });
         }
       })
     );
+  }
+}
+
+function capture(req: Record<string, unknown>, body: unknown): CapturedRequest {
+  const headers = (req.headers as Record<string, string | string[]>) || {};
+  return {
+    url: (req.originalUrl || req.url) as string,
+    origin: headers.host ? `${req.protocol || 'http'}://${headers.host}` : '',
+    headers,
+    body,
+    bodyUnavailable: body === undefined && hasBody(req),
+  };
+}
+
+function hasBody(req: Record<string, unknown>): boolean {
+  if (!req.headers) return false;
+  const headers = req.headers as Record<string, string | string[]>;
+  if (headers['transfer-encoding'] !== undefined) {
+    return true;
+  }
+  const length = Number(headers['content-length']);
+  return Number.isFinite(length) && length > 0;
+}
+
+function copy(value: unknown): unknown {
+  try {
+    return structuredClone(value);
+  } catch {
+    return value;
   }
 }
