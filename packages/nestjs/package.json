@@ -1,21 +1,53 @@
 {
   "name": "@api-profiler/nestjs",
-  "version": "0.0.0",
-  "private": true,
-  "description": "NestJS integration for api-performance-profiler (not yet implemented).",
+  "version": "0.1.0",
+  "description": "NestJS interceptor for api-performance-profiler.",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nahid625/api-performance-profiler.git",
+    "directory": "packages/nestjs"
+  },
+  "homepage": "https://github.com/Nahid625/api-performance-profiler#readme",
+  "bugs": "https://github.com/Nahid625/api-performance-profiler/issues",
+  "keywords": [
+    "nestjs",
+    "interceptor",
+    "api",
+    "performance",
+    "profiler",
+    "latency",
+    "load-test"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@api-profiler/core": "^0.1.0"
+    "@api-profiler/core": "^0.1.0",
+    "@api-profiler/node": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "@nestjs/core": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "rxjs": "^7.0.0 || ^8.0.0"
   },
   "devDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
     "typescript": "^5.5.0",
     "@types/node": "^20.0.0"
   }
