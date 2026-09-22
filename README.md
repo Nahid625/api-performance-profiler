@@ -22,16 +22,23 @@ This is an npm workspaces monorepo:
 | `api-profiler` | Terminal client: live table, `run GET /users/:id`. |
 | **API Performance Profiler** (VS Code) | `🟢 84ms` at the end of each route line, `▶ Load test` above it. |
 | `@api-profiler/core`, `@api-profiler/node` | Internal: types, store, recorder, load runner, local channel. |
-| `@api-profiler/nestjs` | Planned. |
+| `@api-profiler/nestjs` | The NestJS interceptor. |
 
 ## Install
 
+For Express:
 ```bash
 npm install @api-profiler/express
 ```
 
+For NestJS:
+```bash
+npm install @api-profiler/nestjs
+```
+
 ## Usage
 
+**Express:**
 ```js
 const express = require('express');
 const { profiler } = require('@api-profiler/express');
@@ -41,9 +48,16 @@ const p = profiler();
 app.use(p);
 
 app.listen(3000);
+```
 
-// later: per-route count, average, max, error rate and RPS
-p.stats();
+**NestJS:**
+```ts
+import { ProfilerInterceptor } from '@api-profiler/nestjs';
+
+const app = await NestFactory.create(AppModule);
+app.useGlobalInterceptors(new ProfilerInterceptor());
+
+await app.listen(3000);
 ```
 
 ## Load testing a route

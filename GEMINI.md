@@ -70,7 +70,7 @@ steps: `setup-needed` carries `missing: 'package' | 'middleware'`
 `usesProfiler`), and the sidebar, status bar, inline hints and a one-time
 popup per step (workspaceState) offer only what is still missing. Nahid
 installs the `.vsix` by hand, creates publisher `nahid625` and runs
-`vsce publish`. Next: Phase 6
-(NestJS adapter); `nestjs` is still empty.
+`vsce publish`. Phase 6 (NestJS adapter) is complete: `@api-profiler/nestjs` interceptor accurately tracks latencies and captures requests. Next: Phase 7
+(Polish, benchmarks, docs, marketing, v1 publish).
 
 You take pride in writing clean, bug-free code that requires zero future fix passes. Let's build something amazing!
