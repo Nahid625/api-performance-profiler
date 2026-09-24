@@ -60,7 +60,20 @@ app.useGlobalInterceptors(new ProfilerInterceptor());
 await app.listen(3000);
 ```
 
-## Load testing a route
+## The VS Code Extension (Recommended)
+
+While the CLI and programmatic APIs are available, the **API Performance Profiler VS Code Extension** is the magic that brings these metrics directly into your editor. No terminal commands required!
+
+1. **Install the extension** from the VS Code Marketplace: Search for "API Performance Profiler" (by Nahid).
+2. Start your Node.js server (Express or NestJS) with the profiler middleware/interceptor attached.
+3. Open a file containing your routes in VS Code.
+
+The extension connects to your app automatically and provides:
+- **Inline Latency:** See live metrics like `🟢 84.0ms` directly next to your route definitions (`app.get('/users')` or `@Get('users')`).
+- **One-click Load Testing:** Click the `▶ Load test` CodeLens above any route to instantly replay it 1000 times in the background with the exact same body and headers it just received.
+- **Routes Sidebar:** A dedicated view in your Activity Bar showing all observed routes in real-time, sorted slowest-first.
+
+## Programmatic Load Testing (Advanced)
 
 Once a route has a recording, replay it under load — same URL, headers, token
 and body — and get the route's own server-side figures for the whole run:
@@ -81,7 +94,7 @@ is listed in `profiler({ allowLoadOn: ['POST /search'] })` — replaying a `POST
 writes real data. Every replayed request carries `x-api-profiler-load: 1`, so
 your handlers can skip side effects (mail, payments) during a run.
 
-## CLI
+## CLI (Alternative to VS Code)
 
 With the app running, open another terminal:
 
