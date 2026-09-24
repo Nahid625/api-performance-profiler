@@ -2,7 +2,7 @@
   "name": "api-profiler-vscode",
   "displayName": "API Performance Profiler",
   "description": "See how fast your API routes actually are, next to where they are written.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "publisher": "nahid625",
   "license": "AGPL-3.0-only",
   "icon": "media/icon.png",
@@ -164,8 +164,8 @@
     "typescript": "^5.5.0"
   },
   "devDependencies": {
-    "@api-profiler/core": "^0.1.0",
-    "@api-profiler/node": "^0.1.0",
+    "@api-profiler/core": "^1.0.0",
+    "@api-profiler/node": "^1.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.100.0",
     "esbuild": "^0.25.0"

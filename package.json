@@ -1,7 +1,7 @@
 {
   "name": "api-performance-profiler",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "license": "AGPL-3.0-only",
   "workspaces": [
     "packages/core",
@@ -24,6 +24,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@vscode/vsce": "^4.0.0",
+    "autocannon": "^8.0.0",
     "eslint": "^10.10.0",
     "globals": "^17.12.0",
     "jest": "^30.5.1",

@@ -1,6 +1,6 @@
 {
   "name": "@api-profiler/node",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Framework-agnostic request timing for api-performance-profiler.",
   "license": "AGPL-3.0-only",
   "repository": {
@@ -33,7 +33,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@api-profiler/core": "^0.1.0",
+    "@api-profiler/core": "^1.0.0",
     "autocannon": "^8.0.0"
   },
   "devDependencies": {

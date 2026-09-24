@@ -1,6 +1,6 @@
 {
   "name": "@api-profiler/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Core metrics types, aggregation engine, and storage for api-performance-profiler.",
   "license": "AGPL-3.0-only",
   "repository": {
