@@ -8,7 +8,12 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/nahid625.api-profiler-vscode)](https://marketplace.visualstudio.com/items?itemName=nahid625.api-profiler-vscode)
 
+<p align="center">
+  <img src="media/cover.png" alt="API Performance Profiler Cover">
+</p>
+
 Lightweight API performance profiling for Node.js services. It measures real request timings and status codes as they happen and aggregates them into per-route metrics. 
+
 
 **The core idea: hit the route once, we replay it a thousand times.** The middleware sees the real request — the working token, the path param that exists, the body the route accepts — records it in memory, and can replay it under load. The results show up in the terminal or right next to the route in VS Code.
 
