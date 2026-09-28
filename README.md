@@ -1,42 +1,58 @@
 <p align="center"><img src="media/logo.svg" width="128" alt="API Performance Profiler"></p>
 
-# api-performance-profiler
+# API Performance Profiler
 
-### Inspired by Linus Torvalds
+**Local-first API performance profiler for Node.js — route latency, request recording, and load testing directly inside VS Code.**
 
-Lightweight API performance profiling for Node.js services. It measures real
-request timings and status codes as they happen and aggregates them into
-per-route metrics (request count, average latency, error rate).
+[![npm version](https://img.shields.io/npm/v/@api-profiler/express.svg?style=flat)](https://npmjs.org/package/@api-profiler/express)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/nahid625.api-profiler-vscode)](https://marketplace.visualstudio.com/items?itemName=nahid625.api-profiler-vscode)
 
-**The core idea: hit the route once, we replay it a thousand times.** The
-middleware sees the real request — the working token, the path param that
-exists, the body the route accepts — records it in memory, and can replay it
-under load. The results show up in the terminal or next to the route in
-VS Code.
+Lightweight API performance profiling for Node.js services. It measures real request timings and status codes as they happen and aggregates them into per-route metrics. 
 
-This is an npm workspaces monorepo:
+**The core idea: hit the route once, we replay it a thousand times.** The middleware sees the real request — the working token, the path param that exists, the body the route accepts — records it in memory, and can replay it under load. The results show up in the terminal or right next to the route in VS Code.
 
-| Package | What it is |
-|---|---|
-| `@api-profiler/express` | The middleware. This is what you install. |
-| `api-profiler` | Terminal client: live table, `run GET /users/:id`. |
-| **API Performance Profiler** (VS Code) | `🟢 84ms` at the end of each route line, `▶ Load test` above it. |
-| `@api-profiler/core`, `@api-profiler/node` | Internal: types, store, recorder, load runner, local channel. |
-| `@api-profiler/nestjs` | The NestJS interceptor. |
+## Why?
 
-## Install
+As backend developers, we often fly blind when building APIs locally. You write a route, but you don't really know how fast it runs until you leave your editor, set up Postman, or configure a heavy APM tool. 
 
-For Express:
+We wanted performance testing to feel native and frictionless. This tool brings metrics exactly where you need them: right inside your code editor.
+
+## Features
+
+- **VS Code integration:** Inline latency and a dedicated sidebar.
+- **Local load testing:** Replay recorded requests 1,000 times with one click.
+- **Route-level latency:** See real-time execution speeds.
+- **Error-rate tracking:** Spot failing endpoints instantly.
+- **Request recording:** Captures headers, bodies, and paths in-memory automatically.
+- **Express & NestJS integration:** Drop-in middleware/interceptor.
+- **CLI:** A fast, terminal-based dashboard.
+
+## Quick Start: The VS Code Extension (Recommended)
+
+The absolute best way to experience the API Performance Profiler is through our VS Code Extension. It brings metrics directly into your editor and even helps you set up the middleware!
+
+1. **Install the extension:** Search for "API Performance Profiler" in the VS Code Marketplace.
+2. Open a project containing your Express or NestJS routes.
+3. The extension will show a warning if the profiler is not installed, and will guide you to add it with **1-click**.
+
+Once connected, the extension provides:
+- **Inline Latency:** See live metrics like `🟢 84.0ms` directly next to your route definitions (`app.get('/users')`).
+- **One-click Load Testing:** Click the `▶ Load test` CodeLens above any route to instantly replay it in the background.
+- **Routes Sidebar:** A dedicated view showing all observed routes in real-time, sorted slowest-first.
+
+## Manual Setup (Without VS Code)
+
+If you prefer to install it manually or use the CLI:
+
+1. Install the package for your framework:
 ```bash
 npm install @api-profiler/express
-```
-
-For NestJS:
-```bash
+# or
 npm install @api-profiler/nestjs
 ```
 
-## Usage
+2. Attach it to your app:
 
 **Express:**
 ```js
@@ -44,9 +60,7 @@ const express = require('express');
 const { profiler } = require('@api-profiler/express');
 
 const app = express();
-const p = profiler();
-app.use(p);
-
+app.use(profiler());
 app.listen(3000);
 ```
 
@@ -56,126 +70,65 @@ import { ProfilerInterceptor } from '@api-profiler/nestjs';
 
 const app = await NestFactory.create(AppModule);
 app.useGlobalInterceptors(new ProfilerInterceptor());
-
 await app.listen(3000);
 ```
 
-## The VS Code Extension (Recommended)
+3. Run your app, make a request, and see the results!
 
-While the CLI and programmatic APIs are available, the **API Performance Profiler VS Code Extension** is the magic that brings these metrics directly into your editor. No terminal commands required!
+## 30-Second Example
 
-1. **Install the extension** from the VS Code Marketplace: Search for "API Performance Profiler" (by Nahid).
-2. Start your Node.js server (Express or NestJS) with the profiler middleware/interceptor attached.
-3. Open a file containing your routes in VS Code.
+1. Start your API with the profiler attached.
+2. Hit an endpoint: `curl http://127.0.0.1:3000/users/1`
+3. Instantly see `🟢 1.5ms` appear next to the route definition in VS Code!
+4. Click `▶ Load test` above the route to stress test it.
 
-The extension connects to your app automatically and provides:
-- **Inline Latency:** See live metrics like `🟢 84.0ms` directly next to your route definitions (`app.get('/users')` or `@Get('users')`).
-- **One-click Load Testing:** Click the `▶ Load test` CodeLens above any route to instantly replay it 1000 times in the background with the exact same body and headers it just received.
-- **Routes Sidebar:** A dedicated view in your Activity Bar showing all observed routes in real-time, sorted slowest-first.
+*(See `scripts/demo.sh` for a terminal recording script).*
 
-## Programmatic Load Testing (Advanced)
+## CLI Dashboard
 
-Once a route has a recording, replay it under load — same URL, headers, token
-and body — and get the route's own server-side figures for the whole run:
-
-```js
-const result = await p.loadTest('GET', '/users/:id', {
-  target: 'http://127.0.0.1:3000',   // localhost only
-  connections: 10,                   // default
-  duration: 5,                       // seconds, default
-});
-
-result.stats;      // count, averageMs, maxMs, errorRate, rps for the run
-p.loadResults();   // kept until the next run of that route
-```
-
-Runs are off by default, refused in production, and `GET`-only unless a route
-is listed in `profiler({ allowLoadOn: ['POST /search'] })` — replaying a `POST`
-writes real data. Every replayed request carries `x-api-profiler-load: 1`, so
-your handlers can skip side effects (mail, payments) during a run.
-
-## CLI (Alternative to VS Code)
-
-With the app running, open another terminal:
+If you don't use VS Code, you can use the terminal alternative while your app is running:
 
 ```bash
 npx api-profiler                        # live table, refreshed every second
 npx api-profiler run GET /users/:id     # replay the recorded request under load
-npx api-profiler routes                 # routes seen so far and whether each has a recording
-npx api-profiler stats                  # per-route figures for the last window
-npx api-profiler load-results           # results of past load runs
-npx api-profiler stats --json           # raw JSON
-npx api-profiler --port 4790 …          # if you changed the channel port
+npx api-profiler routes                 # routes seen so far
 ```
 
-```
-api-profiler · app http://127.0.0.1:4780 · v0.1.0 · 14:32:10
+## Request Recording / Replay
 
-Observed traffic
-    route            count  avg      max      errors  req/s  when
-🟢  GET /users/:id   12     1.7ms    8.9ms    0%      2.4    live
-🟡  GET /slow        3      202.1ms  202.5ms  0%      --     40s ago
+Locally, the profiler keeps the most recent successful request for each route — including its auth headers — so it can be replayed later for load testing. **Recordings live in memory only** and are masked wherever they are displayed.
 
-Load tests
-🟢  GET /users/:id   10694  0.1ms    1.3ms    0%      3553   load · 2 min ago
-```
+Recording is ON only when `NODE_ENV` is unset, `development` or `test`. 
+**Set `NODE_ENV=production` on your production servers.** It completely disables recording.
 
-🟢 below 200ms average, 🟡 below 500ms, 🔴 from there (`--fast`, `--warn` to
-change). A route that stops receiving requests keeps its last figures, dimmed,
-with their age — a stale number is never shown as current. The CLI has no
-dependencies of its own; it only talks to the local channel below.
+## Benchmarks
 
-## Local channel
+We designed this profiler to be as lightweight as possible. In synthetic benchmarks using `autocannon` (100 concurrent connections for 5 seconds on a trivial Express JSON endpoint), the profiler adds less than **7ms** of median latency (p50).
 
-In development the profiler also opens a small JSON server on
-`http://127.0.0.1:4780` (loopback only) so other local tools — the CLI, later
-the VS Code extension — can read what it has measured:
+| Setup | p50 Latency | Throughput (Req/s) |
+|---|---|---|
+| **Without Profiler** | ~13ms | ~6,000 |
+| **With Profiler** | ~20ms | ~3,500 |
 
-```
-GET  /health   GET  /stats   GET  /recordings (masked)   GET  /load-results
-POST /load-runs   { "method": "GET", "route": "/users/:id" }
-```
+*Run on Node.js v22. You can verify these numbers yourself by running `node benchmarks/run.js` in the repository.*
 
-```js
-profiler({ channel: { port: 4790 } });   // another port
-profiler({ channel: false });            // no channel
-p.channelUrl;                            // 'http://127.0.0.1:4780', or null
-```
+## Packages
 
-It never opens in production or under `NODE_ENV=test` unless you ask for it,
-and if the port is busy it logs one warning and carries on without it.
+This is an npm workspaces monorepo:
 
-## Request recording and `NODE_ENV`
+| Package | What it is |
+|---|---|
+| `api-profiler-vscode` | The VS Code extension. |
+| `@api-profiler/express` | The middleware for Express. |
+| `@api-profiler/nestjs` | The interceptor for NestJS. |
+| `api-profiler` | Terminal CLI dashboard. |
+| `@api-profiler/core` | Internal: types, store, aggregator. |
+| `@api-profiler/node` | Internal: recorder, load runner, local channel. |
 
-Locally, the profiler keeps the most recent successful request for each route
-— including its auth headers — so it can be replayed later for load testing.
-Recordings live in memory only and are masked wherever they are displayed.
+## Contributing
 
-```js
-const { profiler, maskRecording } = require('@api-profiler/express');
-
-p.recordings();                     // raw, for replay — holds real tokens
-p.recordings().map(maskRecording);  // safe to print or display
-```
-
-Recording is on only when `NODE_ENV` is unset, `development` or `test`. Any
-other value — `production`, `staging`, anything else — turns it off completely.
-
-**Set `NODE_ENV=production` on your production servers.** If it is left unset
-there, the profiler cannot tell it is running in production and will record
-real users' requests in memory.
-
-## Performance (Overhead)
-
-We designed this profiler to be as lightweight as possible. In synthetic benchmarks using `autocannon` (100 concurrent connections on a trivial Express JSON endpoint), the profiler adds less than **7ms** of median latency (p50).
-
-- **Without Profiler:** ~13ms p50 latency, ~6000 requests/sec
-- **With Profiler:** ~20ms p50 latency, ~3500 requests/sec
-
-It is extremely fast for local development, and entirely disabled automatically in `NODE_ENV=production`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on running the mono-repo locally, running tests (`npm run verify`), and submitting PRs.
 
 ## License
 
-AGPL-3.0-only. Free to use, modify and self-host; if you offer a modified
-version as a network service, you must publish its source under the same
-license. Copyright (c) 2026 Nahid.
+AGPL-3.0-only. Free to use, modify and self-host; if you offer a modified version as a network service, you must publish its source under the same license. Copyright (c) 2026 Nahid.
