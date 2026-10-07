@@ -1,6 +1,5 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { MetricStoreOptions, RouteStats, UNMATCHED_ROUTE } from '@api-profiler/core';
 import {
   CapturedRequest,
@@ -73,33 +72,17 @@ export class ProfilerInterceptor implements NestInterceptor, ProfilerInterceptor
       capturedReq = capture(req, bodySnapshot);
     }
     
-    return next.handle().pipe(
-      tap({
-        next: () => {
-          done({
-            method,
-            route: routePath,
-            statusCode: res.statusCode || 200,
-            mode,
-            request: capturedReq
-          });
-        },
-        error: (err: unknown) => {
-          let statusCode = 500;
-          if (err && typeof err === 'object') {
-            if ('status' in err && typeof err.status === 'number') statusCode = err.status;
-            else if ('statusCode' in err && typeof err.statusCode === 'number') statusCode = err.statusCode;
-          }
-          done({
-            method,
-            route: routePath,
-            statusCode,
-            mode,
-            request: capturedReq
-          });
-        }
-      })
-    );
+    res.once('finish', () => {
+      done({
+        method,
+        route: routePath,
+        statusCode: res.statusCode || 200,
+        mode,
+        request: capturedReq
+      });
+    });
+
+    return next.handle();
   }
 }
 

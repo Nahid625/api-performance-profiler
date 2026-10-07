@@ -14,13 +14,20 @@ export class RoutesPanel implements vscode.TreeDataProvider<Node> {
   private readonly changed = new vscode.EventEmitter<Node | undefined>();
   readonly onDidChangeTreeData = this.changed.event;
   private live = newLiveState();
+  private lastState: string = 'unreachable';
 
   constructor(
     private readonly connection: Connection,
     private readonly index: RouteIndex,
     private readonly thresholds: () => Thresholds,
   ) {
-    connection.onChange(() => this.changed.fire(undefined));
+    connection.onChange((state) => {
+      if (this.lastState !== 'connected' && state.kind === 'connected') {
+        this.live = newLiveState();
+      }
+      this.lastState = state.kind;
+      this.changed.fire(undefined);
+    });
     index.onDidChange(() => this.changed.fire(undefined));
   }
 
