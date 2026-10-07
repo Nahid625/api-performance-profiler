@@ -1,6 +1,6 @@
 {
   "name": "@api-profiler/nestjs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "NestJS interceptor for api-performance-profiler.",
   "license": "AGPL-3.0-only",
   "repository": {
@@ -34,8 +34,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@api-profiler/core": "^1.0.1",
-    "@api-profiler/node": "^1.0.1"
+    "@api-profiler/core": "^1.0.2",
+    "@api-profiler/node": "^1.0.2"
   },
   "peerDependencies": {
     "@nestjs/common": "^9.0.0 || ^10.0.0 || ^11.0.0",

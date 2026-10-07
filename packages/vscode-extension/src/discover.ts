@@ -82,6 +82,10 @@ export function usesProfiler(text: string): boolean {
   return text.includes('@api-profiler/express') && /\.use\(\s*profiler\(/.test(text);
 }
 
+function stripTrailing(r: string): string {
+  return r.length > 1 && r.endsWith('/') ? r.slice(0, -1) : r;
+}
+
 export function matchRoute(
   locations: RouteLocation[],
   method: string,
@@ -89,9 +93,11 @@ export function matchRoute(
 ): RouteLocation | undefined {
   const wanted = method.toUpperCase();
   const accepts = (l: RouteLocation) => l.method === wanted || l.method === 'ALL';
+  const cleanRoute = stripTrailing(route);
+  
   return (
-    locations.find((l) => accepts(l) && l.prefixKnown && l.route === route) ??
-    locations.find((l) => accepts(l) && !l.prefixKnown && (route === l.route || route.endsWith(l.route)))
+    locations.find((l) => accepts(l) && l.prefixKnown && stripTrailing(l.route) === cleanRoute) ??
+    locations.find((l) => accepts(l) && !l.prefixKnown && (cleanRoute === stripTrailing(l.route) || cleanRoute.endsWith(stripTrailing(l.route))))
   );
 }
 
