@@ -1,5 +1,15 @@
 # Changelog
 
+
+## 1.0.1
+
+- Fixed an issue where the extension would hold onto old latency metrics and display them as stale after a server hot-reload.
+- Updated to work with the improved NestJS interceptor latency tracking.
+
+## 1.0.0
+
+- First stable release!
+
 ## 0.1.0
 
 First release.

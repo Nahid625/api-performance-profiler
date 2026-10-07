@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-10-07
+
+### Fixed
+- **VS Code Extension**: Fixed an issue where the extension would hold onto old latency metrics and display them as stale after a server hot-reload (NestJS/Nodemon).
+- **NestJS Interceptor**: Fixed an issue where background promises in controllers prevented the profiler from accurately stopping the timer when the HTTP response was sent.
+- **Express Example**: Removed spammy periodic `console.log` output from the example server.
+
 ## [1.0.0] - 2026-09-27
 
 ### Added
